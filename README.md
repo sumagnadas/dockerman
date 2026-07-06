@@ -17,7 +17,7 @@ Topics learned or explored while building this project :-
 ## Running the project
 1. Install dependencies
 ```bash
-go mod tidy
+go mod download
 ```
 2. Get the minimal ubuntu-image FS for changing root (this requires `bash` in the container)
 ```bash
