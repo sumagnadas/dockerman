@@ -15,7 +15,7 @@ func init() {
 }
 
 var runCmd = &cobra.Command{
-	Use:   "run",
+	Use:   "run [flags] -- [command]",
 	Short: "Run a container runtime with image and command",
 	Run:   run,
 }
@@ -77,7 +77,7 @@ func run(cmd *cobra.Command, args []string) {
 		}
 	} else if len(cmdline) != 0 {
 		// set up the container namespaces as the host
-		cmd := exec.Command("/proc/self/exe", append([]string{"run"}, args...)...)
+		cmd := exec.Command("/proc/self/exe", append([]string{"run", "--"}, args...)...)
 
 		// link all the system FDs with the terminal FDs
 		cmd.Stdin = os.Stdin
@@ -86,7 +86,8 @@ func run(cmd *cobra.Command, args []string) {
 
 		// Namespaces
 		cmd.SysProcAttr = &syscall.SysProcAttr{
-			Cloneflags: unix.CLONE_NEWUTS | unix.CLONE_NEWPID | unix.CLONE_NEWNET | unix.CLONE_NEWNS,
+			Cloneflags:   unix.CLONE_NEWUTS | unix.CLONE_NEWPID | unix.CLONE_NEWNET | unix.CLONE_NEWNS,
+			Unshareflags: unix.CLONE_NEWNS, // unshare the mount namespace to not show any mounts from the container. it's shared by default.
 		}
 
 		// start the container runtime
