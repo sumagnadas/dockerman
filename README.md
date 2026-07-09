@@ -28,6 +28,13 @@ mkdir ubuntu && cd ubuntu && curl https://cloud-images.ubuntu.com/minimal/releas
 go build -o dock main.go
 # Command format
 # dock run <image> <cmd> <args...>
-sudo ./dock run ubuntu /bin/bash # for an interactive shell
-sudo ./dock run ubuntu /bin/bash -c date # for running a command in a container
+sudo ./dock run ubuntu -- /bin/bash # for an interactive shell
+sudo ./dock run ubuntu -- /bin/bash -c date # for running a command in a container
+```
+3. (Rootless) This can be run as an unprivileged user.
+```bash
+sudo sysctl kernel.apparmor_restrict_unprivileged_userns=0 # Ubuntu-specific
+# This disables apparmor protection for restricting unprivileged user namespaces, used in many exploits.
+# Do at your own risk
+./dock run ubuntu -- /bin/bash
 ```

@@ -85,24 +85,55 @@ func run(cmd *cobra.Command, args []string) {
 			panic(errRun)
 		}
 	} else if len(cmdline) != 0 {
-		// set up the container namespaces as the host
-		cmd := exec.Command("/proc/self/exe", append([]string{"run", "--"}, args...)...)
+		if os.Getuid() == 0 {
+			// set up the container namespaces as the host
+			cmd := exec.Command("/proc/self/exe", append([]string{"run", "--"}, args...)...)
 
-		// link all the system FDs with the terminal FDs
-		cmd.Stdin = os.Stdin
-		cmd.Stderr = os.Stderr
-		cmd.Stdout = os.Stdout
+			// link all the system FDs with the terminal FDs
+			cmd.Stdin = os.Stdin
+			cmd.Stderr = os.Stderr
+			cmd.Stdout = os.Stdout
 
-		// Namespaces
-		cmd.SysProcAttr = &syscall.SysProcAttr{
-			Cloneflags:   unix.CLONE_NEWUTS | unix.CLONE_NEWPID | unix.CLONE_NEWNET | unix.CLONE_NEWNS,
-			Unshareflags: unix.CLONE_NEWNS, // unshare the mount namespace to not show any mounts from the container. it's shared by default.
-		}
+			// Namespaces
+			cmd.SysProcAttr = &syscall.SysProcAttr{
+				Cloneflags:   unix.CLONE_NEWUTS | unix.CLONE_NEWPID | unix.CLONE_NEWNET | unix.CLONE_NEWNS,
+				Unshareflags: unix.CLONE_NEWNS, // unshare the mount namespace to not show any mounts from the container. it's shared by default.
+			}
 
-		// start the container runtime
-		errRun := cmd.Run()
-		if errRun != nil {
-			panic(errRun)
+			// start the container runtime
+			errRun := cmd.Run()
+			if errRun != nil {
+				panic(errRun)
+			}
+		} else {
+			// set up the container namespaces as the host
+			cmd := exec.Command("/proc/self/exe", append([]string{"run", "--"}, args...)...)
+
+			// link all the system FDs with the terminal FDs
+			cmd.Stdin = os.Stdin
+			cmd.Stderr = os.Stderr
+			cmd.Stdout = os.Stdout
+
+			// Namespaces
+			cmd.SysProcAttr = &syscall.SysProcAttr{
+				Cloneflags: unix.CLONE_NEWUSER,
+				UidMappings: []syscall.SysProcIDMap{
+					{
+						ContainerID: 0, HostID: 1000, Size: 1,
+					},
+				},
+				GidMappings: []syscall.SysProcIDMap{
+					{
+						ContainerID: 0, HostID: 1000, Size: 1,
+					},
+				},
+			}
+
+			// start the container runtime
+			errRun := cmd.Run()
+			if errRun != nil {
+				panic(errRun)
+			}
 		}
 		fmt.Println("Container exited...")
 	}
