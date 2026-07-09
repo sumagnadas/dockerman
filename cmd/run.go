@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"syscall"
 
 	"github.com/spf13/cobra"
@@ -62,10 +63,18 @@ func run(cmd *cobra.Command, args []string) {
 		unix.Sethostname([]byte("container"))
 
 		// set root and mount proc
-		fmt.Println("Changing root to ", wd+"/"+image)
-		unix.Chroot(wd + "/" + image)
-		unix.Chdir("/")
+		root_path := filepath.Join(wd, "fakerootfs")
+		img_path := filepath.Join(wd, image)
+		fmt.Println("Changing root to ", root_path)
+		unix.Mount(img_path, root_path, "none", unix.MS_BIND, "")
+
+		// pivot root
+		unix.Chdir(root_path)
+		unix.PivotRoot(".", "old_root")
 		unix.Mount("proc", "proc", "proc", 0, "")
+
+		// detach old_root
+		unix.Unmount("/old_root", unix.MNT_DETACH)
 
 		// for now, make sure the filesystem is unmounted before exiting the container
 		defer unix.Unmount("/proc", unix.MNT_DETACH)
