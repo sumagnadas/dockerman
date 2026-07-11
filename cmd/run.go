@@ -39,10 +39,11 @@ func run(cmd *cobra.Command, args []string) {
 	cmdline := args[1:]
 
 	wd, _ := os.Getwd()
+	img_path := filepath.Join(wd, image)
 
 	// check if image exists
-	if _, err := os.Stat(wd + "/" + image); err != nil {
-		fmt.Println("Image/root filesystem not found or inaccessible at ", wd+"/"+image)
+	if _, err := os.Stat(img_path); err != nil {
+		fmt.Println("Image/root filesystem not found or inaccessible at ", img_path)
 		return
 	}
 
@@ -63,13 +64,11 @@ func run(cmd *cobra.Command, args []string) {
 		unix.Sethostname([]byte("container"))
 
 		// set root and mount proc
-		root_path := filepath.Join(wd, "fakerootfs")
-		img_path := filepath.Join(wd, image)
-		fmt.Println("Changing root to ", root_path)
-		unix.Mount(img_path, root_path, "none", unix.MS_BIND, "")
+		fmt.Println("Changing root to ", img_path)
+		unix.Mount(img_path, img_path, "none", unix.MS_BIND, "")
 
 		// pivot root
-		unix.Chdir(root_path)
+		unix.Chdir(img_path)
 		unix.PivotRoot(".", "old_root")
 		unix.Mount("proc", "proc", "proc", 0, "")
 
@@ -86,7 +85,7 @@ func run(cmd *cobra.Command, args []string) {
 		}
 	} else if len(cmdline) != 0 {
 		if os.Getuid() == 0 {
-			// set up the container namespaces as the host
+			// set up the container namespaces as the host with root
 			cmd := exec.Command("/proc/self/exe", append([]string{"run", "--"}, args...)...)
 
 			// link all the system FDs with the terminal FDs
@@ -106,7 +105,7 @@ func run(cmd *cobra.Command, args []string) {
 				panic(errRun)
 			}
 		} else {
-			// set up the container namespaces as the host
+			// set up the container namespaces as the host user rootless
 			cmd := exec.Command("/proc/self/exe", append([]string{"run", "--"}, args...)...)
 
 			// link all the system FDs with the terminal FDs
