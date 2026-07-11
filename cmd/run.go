@@ -17,13 +17,13 @@ func init() {
 
 var runCmd = &cobra.Command{
 	Use:   "run [flags] -- [command]",
-	Short: "Run a container runtime with image and command",
+	Short: "Run a container runtime with image and command (attaches the stdin, stdout and stderr of the command to shell)",
 	Run:   run,
 }
-var userID int
+var detach bool
 
 func init() {
-	runCmd.Flags().IntVarP(&userID, "user", "u", -1, "User ID to assign container root to.")
+	runCmd.Flags().BoolVarP(&detach, "detach", "d", false, "Detach the stdin of the running command ")
 }
 
 // docker         run image <cmd>
@@ -49,14 +49,15 @@ func run(cmd *cobra.Command, args []string) {
 
 	// debug
 	fmt.Printf("Running with image '%s' and command %v as %d. :)\n", image, cmdline, os.Getpid())
-	fmt.Println(userID)
 
 	if os.Getpid() == 1 {
 		// We are officially inside the container...
 		cmd := exec.Command(cmdline[0], cmdline[1:]...)
 
-		// link all the system FDs with the terminal FDs
-		cmd.Stdin = os.Stdin
+		if !detach {
+			// link all the system FDs with the terminal FDs
+			cmd.Stdin = os.Stdin
+		}
 		cmd.Stderr = os.Stderr
 		cmd.Stdout = os.Stdout
 
@@ -85,13 +86,15 @@ func run(cmd *cobra.Command, args []string) {
 		}
 	} else if len(cmdline) != 0 {
 		if os.Getuid() == 0 {
-			// set up the container namespaces as the host with root
+			// set up the other namespaces as the host with root user (in semi-container)
 			cmd := exec.Command("/proc/self/exe", append([]string{"run", "--"}, args...)...)
 
-			// link all the system FDs with the terminal FDs
-			cmd.Stdin = os.Stdin
-			cmd.Stderr = os.Stderr
-			cmd.Stdout = os.Stdout
+			if !detach {
+				// link all the system FDs with the terminal FDs
+				cmd.Stdin = os.Stdin
+				cmd.Stderr = os.Stderr
+				cmd.Stdout = os.Stdout
+			}
 
 			// Namespaces
 			cmd.SysProcAttr = &syscall.SysProcAttr{
@@ -105,13 +108,15 @@ func run(cmd *cobra.Command, args []string) {
 				panic(errRun)
 			}
 		} else {
-			// set up the container namespaces as the host user rootless
+			// set up the user namespace for container as the host user rootless
 			cmd := exec.Command("/proc/self/exe", append([]string{"run", "--"}, args...)...)
 
-			// link all the system FDs with the terminal FDs
-			cmd.Stdin = os.Stdin
-			cmd.Stderr = os.Stderr
+			if !detach {
+				// link all the system FDs with the terminal FDs
+				cmd.Stdin = os.Stdin
+			}
 			cmd.Stdout = os.Stdout
+			cmd.Stderr = os.Stderr
 
 			// Namespaces
 			cmd.SysProcAttr = &syscall.SysProcAttr{
