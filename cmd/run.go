@@ -1,7 +1,11 @@
 package cmd
 
 import (
+	"bytes"
+	"dock/utils"
+	"encoding/json"
 	"fmt"
+	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -16,14 +20,16 @@ func init() {
 }
 
 var runCmd = &cobra.Command{
-	Use:   "run [flags] -- [command]",
+	Use:   "run [flags] -- <command>",
 	Short: "Run a container runtime with image and command (attaches the stdin, stdout and stderr of the command to shell)",
 	Run:   run,
 }
 var detach bool
+var name string
 
 func init() {
 	runCmd.Flags().BoolVarP(&detach, "detach", "d", false, "Detach the stdin of the running command ")
+	runCmd.Flags().StringVar(&name, "name", "", "Name of the container")
 }
 
 // docker         run image <cmd>
@@ -60,9 +66,12 @@ func run(cmd *cobra.Command, args []string) {
 		}
 		cmd.Stderr = os.Stderr
 		cmd.Stdout = os.Stdout
-
+		hname := name
+		if hname == "" {
+			hname = "container"
+		}
 		// set hostname to differentiate
-		unix.Sethostname([]byte("container"))
+		unix.Sethostname([]byte(hname))
 
 		// set root and mount proc
 		fmt.Println("Changing root to ", img_path)
@@ -87,7 +96,7 @@ func run(cmd *cobra.Command, args []string) {
 	} else if len(cmdline) != 0 {
 		if os.Getuid() == 0 {
 			// set up the other namespaces as the host with root user (in semi-container)
-			cmd := exec.Command("/proc/self/exe", append([]string{"run", "--"}, args...)...)
+			cmd := exec.Command("/proc/self/exe", os.Args[1:]...)
 
 			if !detach {
 				// link all the system FDs with the terminal FDs
@@ -103,13 +112,37 @@ func run(cmd *cobra.Command, args []string) {
 			}
 
 			// start the container runtime
-			errRun := cmd.Run()
+			errRun := cmd.Start()
+
+			// Add to the manager when a new container is opened
+			if name == "" {
+				newname, err := utils.GenerateRandomHash(8) // generate a name based on random hash
+				if err != nil {
+					name = "random1234"
+				} else {
+					name = newname
+				}
+			}
+			cont := utils.ContState{
+				Name:   name,
+				Image:  image,
+				Nprocs: 1,
+				Procs:  []int{cmd.Process.Pid},
+			}
+			defer WaitAndRemove(cmd) // To make sure the golang CLI doesn't exit before the inner command attaches to the TTY
+			body, _ := json.Marshal(cont)
+			_, err := http.Post("http://localhost:4033/add", "application/json", bytes.NewBuffer(body))
+			if err != nil {
+				fmt.Println("POST failed: ", err)
+			}
+
 			if errRun != nil {
 				panic(errRun)
 			}
+
 		} else {
 			// set up the user namespace for container as the host user rootless
-			cmd := exec.Command("/proc/self/exe", append([]string{"run", "--"}, args...)...)
+			cmd := exec.Command("/proc/self/exe", os.Args[1:]...)
 
 			if !detach {
 				// link all the system FDs with the terminal FDs
@@ -140,5 +173,13 @@ func run(cmd *cobra.Command, args []string) {
 			}
 		}
 		fmt.Println("Container exited...")
+	}
+}
+
+func WaitAndRemove(cmd *exec.Cmd) {
+	cmd.Wait()
+	_, err := http.Post("http://localhost:4033/remove", "application/json", bytes.NewBuffer([]byte(name)))
+	if err != nil {
+		fmt.Println("POST failed: ", err)
 	}
 }
