@@ -35,7 +35,7 @@ func init() {
 // docker         run image <cmd>
 // go run main.go run image <cmd>
 func run(cmd *cobra.Command, args []string) {
-	if len(os.Args) < 4 {
+	if len(args) < 2 {
 		fmt.Println("Not enough arguments.")
 		return
 	}
@@ -113,6 +113,9 @@ func run(cmd *cobra.Command, args []string) {
 
 			// start the container runtime
 			errRun := cmd.Start()
+			if errRun != nil {
+				panic(errRun)
+			}
 
 			// Add to the manager when a new container is opened
 			if name == "" {
@@ -129,16 +132,12 @@ func run(cmd *cobra.Command, args []string) {
 				Nprocs: 1,
 				Procs:  []int{cmd.Process.Pid},
 			}
-			defer WaitAndRemove(cmd) // To make sure the golang CLI doesn't exit before the inner command attaches to the TTY
 			body, _ := json.Marshal(cont)
 			_, err := http.Post("http://localhost:4033/add", "application/json", bytes.NewBuffer(body))
 			if err != nil {
 				fmt.Println("POST failed: ", err)
 			}
-
-			if errRun != nil {
-				panic(errRun)
-			}
+			defer utils.WaitAndRemove(cmd, name, cmd.Process.Pid) // To make sure the golang CLI doesn't exit before the inner command attaches to the TTY
 
 		} else {
 			// set up the user namespace for container as the host user rootless
@@ -173,13 +172,5 @@ func run(cmd *cobra.Command, args []string) {
 			}
 		}
 		fmt.Println("Container exited...")
-	}
-}
-
-func WaitAndRemove(cmd *exec.Cmd) {
-	cmd.Wait()
-	_, err := http.Post("http://localhost:4033/remove", "application/json", bytes.NewBuffer([]byte(name)))
-	if err != nil {
-		fmt.Println("POST failed: ", err)
 	}
 }
