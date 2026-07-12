@@ -28,24 +28,24 @@ mkdir ubuntu && cd ubuntu && curl https://cloud-images.ubuntu.com/minimal/releas
 ```
 3. Build the binary (reqd. for rooted running for now) and run the container
 ```bash
-go build -o dock main.go
+go build -o dockerman main.go
 # Command format
-# dock run <image> <cmd> <args...>
-sudo ./dock run ubuntu -- /bin/bash # for an interactive shell
-sudo ./dock run ubuntu -- /bin/bash -c date # for running a command in a container
+# dockerman run <image> <cmd> <args...>
+sudo ./dockerman run ubuntu -- /bin/bash # for an interactive shell
+sudo ./dockerman run ubuntu -- /bin/bash -c date # for running a command in a container
 ```
 3. (Rootless) This can be run as an unprivileged user.
 ```bash
 sudo sysctl kernel.apparmor_restrict_unprivileged_userns=0 # Ubuntu-specific
 # This disables apparmor protection for restricting unprivileged user namespaces, used in many exploits.
 # Do at your own risk
-./dock run ubuntu -- /bin/bash
+./dockerman run ubuntu -- /bin/bash
 ```
 4. Entering into a container (Requires root)
 ```bash
-./dock daemon # requires the backend server running in background
-./dock run --name smth ubuntu -- /bin/bash # Works with both rooted and rootless container
-sudo ./dock exec smth -- /bin/bash
+./dockerman daemon # requires the backend server running in background
+./dockerman run --name smth ubuntu -- /bin/bash # Works with both rooted and rootless container
+sudo ./dockerman exec smth -- /bin/bash
 ```
 
 ## Some major sources I used for studying
