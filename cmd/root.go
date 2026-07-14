@@ -8,7 +8,7 @@ import (
 )
 
 var root_cmd = &cobra.Command{
-	Use:   "dock",
+	Use:   "dockerman",
 	Short: "Minimal container management system",
 }
 
