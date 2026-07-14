@@ -1,12 +1,8 @@
 package cmd
 
 import (
-	"bytes"
 	"dock/utils"
-	"encoding/json"
 	"fmt"
-	"io"
-	"net/http"
 	"os"
 	"path/filepath"
 
@@ -39,32 +35,14 @@ func stop_cnt(c *cobra.Command, args []string) {
 
 	f.Write([]byte("1"))
 
-	resp, err := http.Get("http://localhost:4033/get?name=" + container)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	if resp.StatusCode == 500 {
-		fmt.Println("Container with name", container, "does not exist.")
-		return
-	}
-
-	body, errRead := io.ReadAll(resp.Body)
-	if errRead != nil {
-		fmt.Println("Couldn't read body.", errRead)
-		return
-	}
-	var cont utils.ContState
-	errJson := json.Unmarshal(body, &cont)
-	if errJson != nil {
-		fmt.Println("Not exactly json?", errJson)
+	cont, err_get := utils.GetCont(container)
+	if err_get != nil {
+		fmt.Println("Couldn't get container", err)
 		return
 	}
 	cont.Running = false
-	upd_cont, _ := json.Marshal(cont)
-	_, errUpd := http.Post("http://localhost:4033/update", "application/json", bytes.NewBuffer(upd_cont))
-	if errUpd != nil {
-		fmt.Println("Couldn't update container.", errUpd)
-		return
+	err_upd := utils.UpdateCont(name, cont)
+	if err_upd != nil {
+		fmt.Println("Couldn't update container state.")
 	}
 }
