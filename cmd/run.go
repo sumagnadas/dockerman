@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"syscall"
 
 	"github.com/spf13/cobra"
@@ -30,6 +31,26 @@ var name string
 func init() {
 	runCmd.Flags().BoolVarP(&detach, "detach", "d", false, "Detach the stdin of the running command ")
 	runCmd.Flags().StringVar(&name, "name", "", "Name of the container")
+}
+
+func attachPidCgroup(name string, pid int) string {
+	cgroup_dir := filepath.Join("/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice/dockerman", name)
+	err := os.Mkdir(cgroup_dir, 0755)
+	if err != nil {
+		fmt.Println("Cgroup err", err)
+		panic(err)
+	}
+	procs_file := filepath.Join(cgroup_dir, "cgroup.procs")
+	fmt.Println(os.Chmod(procs_file, 0664))
+	fmt.Println("Cgroup:", procs_file)
+	procs, errProcs := os.OpenFile(procs_file, os.O_WRONLY|os.O_APPEND, 0664)
+	if errProcs != nil {
+		panic(errProcs)
+	}
+	defer procs.Close()
+	_, errWr := procs.WriteString(strconv.Itoa(pid))
+	fmt.Println("error in writing", errWr)
+	return cgroup_dir
 }
 
 // docker         run image <cmd>
@@ -105,18 +126,6 @@ func run(cmd *cobra.Command, args []string) {
 				cmd.Stdout = os.Stdout
 			}
 
-			// Namespaces
-			cmd.SysProcAttr = &syscall.SysProcAttr{
-				Cloneflags:   unix.CLONE_NEWUTS | unix.CLONE_NEWPID | unix.CLONE_NEWNET | unix.CLONE_NEWNS,
-				Unshareflags: unix.CLONE_NEWNS, // unshare the mount namespace to not show any mounts from the container. it's shared by default.
-			}
-
-			// start the container runtime
-			errRun := cmd.Start()
-			if errRun != nil {
-				panic(errRun)
-			}
-
 			// Add to the manager when a new container is opened
 			if name == "" {
 				newname, err := utils.GenerateRandomHash(8) // generate a name based on random hash
@@ -126,19 +135,48 @@ func run(cmd *cobra.Command, args []string) {
 					name = newname
 				}
 			}
+			// create cgroup
+			cgroup_dir := filepath.Join("/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice/dockerman", name)
+			errCgroup := os.Mkdir(cgroup_dir, 0755)
+			if errCgroup != nil {
+				fmt.Println("Cgroup err", errCgroup)
+				panic(errCgroup)
+			}
+			cg_fd, errFd := unix.Open(cgroup_dir, unix.O_DIRECTORY|unix.O_CLOEXEC, 0)
+			if errFd != nil {
+				panic(errFd)
+			}
+			defer unix.Close(cg_fd)
+			// Namespaces
+			cmd.SysProcAttr = &syscall.SysProcAttr{
+				Cloneflags:   unix.CLONE_NEWUTS | unix.CLONE_NEWPID | unix.CLONE_NEWNET | unix.CLONE_NEWNS,
+				Unshareflags: unix.CLONE_NEWNS, // unshare the mount namespace to not show any mounts from the container. it's shared by default.
+				CgroupFD:     cg_fd,
+				UseCgroupFD:  true,
+			}
+
+			// start the container runtime
+			errRun := cmd.Start()
+			if errRun != nil {
+				panic(errRun)
+			}
+
+			pid := cmd.Process.Pid
+
 			cont := utils.ContState{
-				Name:   name,
-				Image:  image,
-				Nprocs: 1,
-				Procs:  []int{cmd.Process.Pid},
+				Name:    name,
+				Image:   image,
+				Nprocs:  1,
+				Procs:   []int{pid},
+				Running: true,
 			}
 			body, _ := json.Marshal(cont)
 			_, err := http.Post("http://localhost:4033/add", "application/json", bytes.NewBuffer(body))
 			if err != nil {
 				fmt.Println("POST failed: ", err)
 			}
-			defer utils.WaitAndRemove(cmd, name, cmd.Process.Pid) // To make sure the golang CLI doesn't exit before the inner command attaches to the TTY
-
+			// attachPidCgroup(name, pid)
+			defer utils.WaitAndRemove(cmd, name, pid) // To make sure the golang CLI doesn't exit before the inner command attaches to the TTY
 		} else {
 			// set up the user namespace for container as the host user rootless
 			cmd := exec.Command("/proc/self/exe", os.Args[1:]...)
@@ -164,6 +202,7 @@ func run(cmd *cobra.Command, args []string) {
 					},
 				},
 			}
+			cmd.Env = append(cmd.Env, "UNROOTED=1")
 
 			// start the container runtime
 			errRun := cmd.Run()

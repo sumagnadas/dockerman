@@ -3,10 +3,11 @@ package utils
 import (
 	"crypto/rand"
 	"encoding/hex"
-
 	"fmt"
 	"net/http"
+	"os"
 	"os/exec"
+	"path/filepath"
 	"strconv"
 )
 
@@ -28,4 +29,8 @@ func WaitAndRemove(cmd *exec.Cmd, name string, pid int) {
 	if err != nil {
 		fmt.Println("Get failed: ", err)
 	}
+
+	// remove cgroup
+	cgroup_dir := filepath.Join("/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice/dockerman", name)
+	os.Remove(cgroup_dir)
 }
