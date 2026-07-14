@@ -7,13 +7,13 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var rootCmd = &cobra.Command{
+var root_cmd = &cobra.Command{
 	Use:   "dock",
 	Short: "Minimal container management system",
 }
 
 func Execute() {
-	if err := rootCmd.Execute(); err != nil {
+	if err := root_cmd.Execute(); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}

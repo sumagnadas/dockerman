@@ -9,40 +9,48 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var stopCmd = &cobra.Command{
+var freeze_cmd = &cobra.Command{
 	Use:   "freeze [container_name]",
 	Short: "Freeze a running container",
-	Run:   stop_cnt,
+	Run:   freezeFunc,
 }
 
 func init() {
-	rootCmd.AddCommand(stopCmd)
+	root_cmd.AddCommand(freeze_cmd)
 }
 
-func stop_cnt(c *cobra.Command, args []string) {
+func freezeFunc(c *cobra.Command, args []string) {
 	if len(args) < 1 {
 		fmt.Println(c.Use)
+		return
 	}
+
+	// freeze using cgroup
 	container := args[0]
 	freezepath := filepath.Join("/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice/dockerman", container, "cgroup.freeze")
 
-	f, err := os.OpenFile(freezepath, os.O_WRONLY, 0644)
-	if err != nil {
-		fmt.Printf("Failed to open file: %s\n", err)
+	f, err_open := os.OpenFile(freezepath, os.O_WRONLY, 0644)
+	if err_open != nil {
+		fmt.Printf("Failed to open file: %s\n", err_open)
 		return
 	}
 	defer f.Close()
 
 	f.Write([]byte("1"))
 
+	// get container
 	cont, err_get := utils.GetCont(container)
 	if err_get != nil {
-		fmt.Println("Couldn't get container", err)
+		fmt.Println("Couldn't get container:", err_get)
 		return
 	}
+
+	// update container state
 	cont.Running = false
+
+	// update daemon
 	err_upd := utils.UpdateCont(name, cont)
 	if err_upd != nil {
-		fmt.Println("Couldn't update container state.")
+		fmt.Println("Couldn't update container state:", err_upd)
 	}
 }

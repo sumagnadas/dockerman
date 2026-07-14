@@ -9,12 +9,13 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"os"
 	"os/exec"
-	"path/filepath"
 	"strconv"
 )
 
+/*
+Generate random hash of fixed length, used for container naming
+*/
 func GenerateRandomHash(length int) (string, error) {
 	// Allocate a byte slice to hold half the requested length
 	// (since each byte produces 2 hex characters)
@@ -27,6 +28,11 @@ func GenerateRandomHash(length int) (string, error) {
 	return hex.EncodeToString(bytes), nil
 }
 
+/*
+Cleanup function for containers
+  - Waits for container PID to exit
+  - Removes container pid from daemon
+*/
 func WaitAndRemove(cmd *exec.Cmd, name string, pid int) {
 	cmd.Wait()
 
@@ -35,12 +41,9 @@ func WaitAndRemove(cmd *exec.Cmd, name string, pid int) {
 	if err_remove != nil {
 		fmt.Println("Get failed: ", err_remove)
 	}
-
-	// remove cgroup
-	cgroup_dir := filepath.Join("/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice/dockerman", name)
-	os.Remove(cgroup_dir)
 }
 
+// Gets container from daemon server
 func GetCont(name string) (ContState, error) {
 	resp, err_get := http.Get("http://localhost:4033/get?name=" + name)
 	if err_get != nil {
@@ -66,8 +69,8 @@ func GetCont(name string) (ContState, error) {
 	return cont, nil
 }
 
+// Update container info in daemon
 func UpdateCont(name string, cont ContState) error {
-
 	upd_cont, _ := json.Marshal(cont)
 	_, err_upd := http.Post("http://localhost:4033/update", "application/json", bytes.NewBuffer(upd_cont))
 	if err_upd != nil {

@@ -10,35 +10,49 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var psCmd = &cobra.Command{
+var ps_cmd = &cobra.Command{
 	Use:   "ps",
 	Short: "Get a list of running containers",
-	Run:   ps_cont,
+	Run:   psFunc,
 }
 
 func init() {
-	rootCmd.AddCommand(psCmd)
+	root_cmd.AddCommand(ps_cmd)
 }
 
-func ps_cont(c *cobra.Command, args []string) {
-	resp, err := http.Get("http://localhost:4033/containers")
-	if err != nil {
-		fmt.Println("daemon down or inaccessible.", err)
+func psFunc(c *cobra.Command, args []string) {
+	// get containers from backend
+	resp, err_conts := http.Get("http://localhost:4033/containers")
+	if err_conts != nil {
+		fmt.Println("daemon down or inaccessible.", err_conts)
 		return
 	}
-	body, errRead := io.ReadAll(resp.Body)
-	if errRead != nil {
-		fmt.Println("Couldn't read body.", errRead)
+	body, err_read := io.ReadAll(resp.Body)
+	if err_read != nil {
+		fmt.Println("Couldn't read body.", err_read)
 		return
 	}
+
+	// read containers list from response
 	var conts = []utils.ContState{}
-	errJson := json.Unmarshal(body, &conts)
-	if errJson != nil {
-		fmt.Println("Not exactly json returned from daemon", errJson)
+	err_json := json.Unmarshal(body, &conts)
+	if err_json != nil {
+		fmt.Println("Not exactly json returned from daemon", err_json)
 		return
 	}
-	fmt.Println("Name\t\tImage\tNo. of starting procs.")
+
+	// print containers list
+	fmt.Println("Name\t\tImage\tNprocs\tRooted\t\tState")
 	for _, cont := range conts {
-		fmt.Printf("%s\t%s\t%d\n", cont.Name, cont.Image, cont.Nprocs)
+		// State strings
+		state := "Frozen"
+		if cont.Running {
+			state = "Running"
+		}
+		root_state := "Rootless"
+		if cont.Rooted {
+			root_state = "Rooted"
+		}
+		fmt.Printf("%s\t%s\t%d\t%s\t%s\n", cont.Name, cont.Image, cont.Nprocs, root_state, state)
 	}
 }
