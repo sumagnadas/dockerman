@@ -5,7 +5,7 @@ This folder contains a basic container runtime management system built from scra
 - Rootless (user isolation)
 - Multi container management system based on this runtime
 
-Future commits will include :-
+Future commits may include :-
 - Configuration file based container builds
 - Resource limiting using Cgroups
 
