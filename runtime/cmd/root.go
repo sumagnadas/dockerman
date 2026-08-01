@@ -8,8 +8,8 @@ import (
 )
 
 var root_cmd = &cobra.Command{
-	Use:   "dockmand",
-	Short: "Minimal container management system",
+	Use:   "dockmanc",
+	Short: "Minimal container creation system",
 }
 
 func Execute() {

@@ -1,11 +1,8 @@
 package cmd
 
 import (
-	"bytes"
 	"dock/utils"
-	"encoding/json"
 	"fmt"
-	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -16,21 +13,21 @@ import (
 )
 
 var run_cmd = &cobra.Command{
-	Use:   "run [flags] -- <command>",
+	Use:   "run image [flags] -- <command>",
 	Short: "Run a container runtime with image and command (attaches the stdin, stdout and stderr of the command to shell)",
 	Run:   runFunc,
 }
-var detach bool
+var user int
 var name string
 
 func init() {
 	root_cmd.AddCommand(run_cmd)
-	run_cmd.Flags().BoolVarP(&detach, "detach", "d", false, "Detach the stdin of the running command ")
+	run_cmd.Flags().IntVar(&user, "user", 0, "UID of the user")
 	run_cmd.Flags().StringVar(&name, "name", "", "Name of the container")
 }
 
-// docker         runFunc image <cmd>
-// go runFunc main.go runFunc image <cmd>
+// docker         run image <cmd>
+// go run main.go run image <cmd>
 func runFunc(c *cobra.Command, args []string) {
 	if len(args) < 2 {
 		fmt.Println("Not enough arguments.")
@@ -41,12 +38,17 @@ func runFunc(c *cobra.Command, args []string) {
 	// divide the commandline arguments
 	image := args[0]
 	cmdline := args[1:]
-
 	wd, _ := os.Getwd()
 	img_path := filepath.Join(wd, image)
 
+	// create the initial arguments slice for the self exec
+	init_args := []string{"run", image, "--name", name}
+	init_args = append(init_args, "--")
+	init_args = append(init_args, cmdline...)
+
 	// check if image exists
 	if _, err_stat := os.Stat(img_path); err_stat != nil {
+		fmt.Println(err_stat)
 		fmt.Println("Image/root filesystem not found or inaccessible at ", img_path)
 		return
 	}
@@ -59,9 +61,7 @@ func runFunc(c *cobra.Command, args []string) {
 		cmd := exec.Command(cmdline[0], cmdline[1:]...)
 
 		// link all the system FDs with the terminal FDs
-		if !detach {
-			cmd.Stdin = os.Stdin
-		}
+		cmd.Stdin = os.Stdin
 		cmd.Stderr = os.Stderr
 		cmd.Stdout = os.Stdout
 
@@ -93,16 +93,14 @@ func runFunc(c *cobra.Command, args []string) {
 			panic(err_run)
 		}
 	} else if len(cmdline) != 0 {
-		if os.Getuid() == 0 {
+		if os.Geteuid() == 0 && user == 0 {
 			// set up the other namespaces as the host with root user (in semi-container)
-			cmd := exec.Command("/proc/self/exe", os.Args[1:]...)
+			cmd := exec.Command("/proc/self/exe", init_args...)
 
 			// link all the system FDs with the terminal FDs
-			if !detach {
-				cmd.Stdin = os.Stdin
-				cmd.Stderr = os.Stderr
-				cmd.Stdout = os.Stdout
-			}
+			cmd.Stdin = os.Stdin
+			cmd.Stderr = os.Stderr
+			cmd.Stdout = os.Stdout
 
 			// Add to the manager when a new container is opened
 			if name == "" {
@@ -115,8 +113,10 @@ func runFunc(c *cobra.Command, args []string) {
 			}
 
 			// create cgroup
-			cgroup_dir := filepath.Join("/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice/dockerman", name)
+			cgroup_dir := filepath.Join("/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice/dockman", name)
 			err_cgroup := os.Mkdir(cgroup_dir, 0755)
+			defer os.Remove(cgroup_dir)
+
 			if err_cgroup != nil {
 				fmt.Println("Cgroup err", err_cgroup)
 				panic(err_cgroup)
@@ -141,31 +141,13 @@ func runFunc(c *cobra.Command, args []string) {
 				panic(err_run)
 			}
 
-			// add container to daemon state
-			pid := cmd.Process.Pid
-			cont := utils.ContState{
-				Name:    name,
-				Image:   image,
-				Nprocs:  1,
-				Procs:   []int{pid},
-				Running: true,
-			}
-			body, _ := json.Marshal(cont)
-			_, err_post := http.Post("http://localhost:4033/add", "application/json", bytes.NewBuffer(body))
-			if err_post != nil {
-				fmt.Println("POST failed: ", err_post)
-			}
-
-			// To make sure the golang CLI doesn't exit before the inner command attaches to the TTY
-			defer utils.WaitAndRemove(cmd, name, pid)
-		} else {
+			defer cmd.Wait()
+		} else if user == os.Geteuid() || os.Geteuid() == 0 && user != 0 {
 			// set up the user namespace for container as the host user rootless
-			cmd := exec.Command("/proc/self/exe", os.Args[1:]...)
+			cmd := exec.Command("/proc/self/exe", init_args...)
 
-			if !detach {
-				// link all the system FDs with the terminal FDs
-				cmd.Stdin = os.Stdin
-			}
+			// link all the system FDs with the terminal FDs
+			cmd.Stdin = os.Stdin
 			cmd.Stdout = os.Stdout
 			cmd.Stderr = os.Stderr
 
@@ -174,25 +156,27 @@ func runFunc(c *cobra.Command, args []string) {
 				Cloneflags: unix.CLONE_NEWUSER,
 				UidMappings: []syscall.SysProcIDMap{
 					{
-						ContainerID: 0, HostID: 1000, Size: 1,
+						ContainerID: 0, HostID: user, Size: 1,
 					},
 				},
 				GidMappings: []syscall.SysProcIDMap{
 					{
-						ContainerID: 0, HostID: 1000, Size: 1,
+						ContainerID: 0, HostID: user, Size: 1,
 					},
 				},
+				Credential: &syscall.Credential{
+					Uid: 0,
+					Gid: 0,
+				},
 			}
-			cmd.Env = append(cmd.Env, "UNROOTED=1")
 
 			// start the container runtime
 			err_run := cmd.Run()
 			if err_run != nil {
 				panic(err_run)
 			}
+		} else {
+			fmt.Println("You need root to create rooted container. To create a rootless container please use the --user flag.")
 		}
-
-		// more debug
-		fmt.Println("Container exited...")
 	}
 }

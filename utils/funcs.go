@@ -9,8 +9,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"os/exec"
-	"strconv"
 )
 
 /*
@@ -26,21 +24,6 @@ func GenerateRandomHash(length int) (string, error) {
 	}
 
 	return hex.EncodeToString(bytes), nil
-}
-
-/*
-Cleanup function for containers
-  - Waits for container PID to exit
-  - Removes container pid from daemon
-*/
-func WaitAndRemove(cmd *exec.Cmd, name string, pid int) {
-	cmd.Wait()
-
-	// remove container from daemon state
-	_, err_remove := http.Get("http://localhost:4033/remove?name=" + name + "&pid=" + strconv.Itoa(pid))
-	if err_remove != nil {
-		fmt.Println("Get failed: ", err_remove)
-	}
 }
 
 // Gets container from daemon server

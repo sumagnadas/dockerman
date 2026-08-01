@@ -1,0 +1,109 @@
+syntax="proto3";
+
+option go_package="dock/service";
+
+package dockerman;
+
+service ContainerService {
+    rpc CreateContainer(CreateContainerRequest) returns (CreateContainerResponse) {}
+    
+    rpc AttachContainer(stream AttachContainerMessage) returns (stream AttachContainerMessage) {}
+
+    // StartContainer starts the container.
+    rpc StartContainer(ContainerIdRequest) returns (EmptyMessage) {}
+
+    // StopContainer stops a running container with a grace period (i.e., timeout).
+    // This call is idempotent, and must not return an error if the container has
+    // already been stopped.
+    // The runtime must forcibly kill the container after the grace period is
+    // reached.
+    rpc StopContainer(ContainerIdRequest) returns (EmptyMessage) {}
+
+    // RemoveContainer removes the container. If the container is running, the
+    // container must be forcibly removed.
+    // This call is idempotent, and must not return an error if the container has
+    // already been removed.
+    rpc RemoveContainer(ContainerIdRequest) returns (EmptyMessage) {}
+
+    // ListContainers lists all containers by filters.
+    rpc ListContainers(EmptyMessage) returns (ListContainersResponse) {}
+
+    // ContainerStatus returns status of the container. If the container is not
+    // present, returns an error.
+    rpc ContainerStatus(ContainerStatusRequest) returns (ContainerStatusResponse) {}
+
+    // ReopenContainerLog asks runtime to reopen the stdout/stderr log file
+    // for the container. This is often called after the log file has been
+    // rotated. If the container is not running, container runtime can choose
+    // to either create a new log file and return nil, or return an error.
+    // Once it returns error, new container log file MUST NOT be created.
+    // // rpc ReopenContainerLog(ReopenContainerLogRequest) returns (ReopenContainerLogResponse) {}
+    
+    // Exec prepares a streaming endpoint to execute a command in the container.
+    rpc Exec(ExecRequest) returns (ExecResponse) {}
+}
+
+
+// Request structs
+message CreateContainerRequest {
+    optional string name    = 1;
+    string          image   = 2;
+    optional int32  user    = 3;
+    string          command = 4;
+    repeated string args    = 5;
+    bool            rooted  = 6;
+}
+
+message ContainerIdRequest {
+    string id = 1;
+}
+
+message ContainerStatusRequest {
+    oneof container_id {
+        string name = 1;
+        string id   = 2;
+    }
+}
+
+message ExecRequest {
+    string name          = 1;
+    string command       = 2;
+    repeated string args = 3;
+}
+
+// Reply structs
+message EmptyMessage {}
+
+message CreateContainerResponse {
+    string id = 1;
+}
+
+message Container {
+    string id            = 1;
+    string name          = 2;
+    string image         = 3;
+    int32 nprocs         = 4;
+    repeated int32 procs = 5;
+    bool rooted          = 6;
+}
+
+message ListContainersResponse {
+    repeated ContainerStatusResponse conts = 1;
+}
+
+message ContainerStatusResponse {
+    string state   = 1;
+    Container cont = 2;
+}
+
+message ExecResponse {
+    string url = 1;
+}
+
+message AttachContainerMessage {
+    oneof payload {
+        bytes stdin_data  = 1;
+        bytes stdout_data = 2;
+        string container_id = 3;
+    }
+}

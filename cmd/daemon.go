@@ -1,154 +1,103 @@
 package cmd
 
 import (
+	"context"
 	"dock/utils"
+	"errors"
 	"fmt"
-	"net/http"
+	"io"
+	"log"
+	"net"
 	"os"
-	"path/filepath"
+	"os/exec"
 	"strconv"
 
-	"github.com/gin-gonic/gin"
+	pb "dock/service"
+
+	"github.com/creack/pty"
 	"github.com/spf13/cobra"
+	"google.golang.org/grpc"
 )
 
 var containers = []utils.ContState{}
 
-/*
-POST /add
-
-Adds a container to the list.
-*/
-func addCont(ctx *gin.Context) {
-	var newCont utils.ContState
-
-	if err := ctx.BindJSON(&newCont); err != nil {
-		fmt.Println(err)
-		return
-	}
-
-	containers = append(containers, newCont)
-	ctx.IndentedJSON(http.StatusAccepted, newCont)
+type ContainerServer struct {
+	pb.UnimplementedContainerServiceServer
 }
 
-/* Helper function to remove PID from container process list */
-func removePid(cont *utils.ContState, pid int) {
-	ind := -1
-	for i, v := range cont.Procs {
-		if v == pid {
-			ind = i
-			break
-		}
+func (s *ContainerServer) CreateContainer(ctx context.Context, req *pb.CreateContainerRequest) (*pb.CreateContainerResponse, error) {
+	var id, name string
+
+	newid, err_hash := utils.GenerateRandomHash(8) // generate a id based on random hash
+	if err_hash != nil {
+		id = "random1234"
+	} else {
+		id = newid
 	}
-
-	if ind != -1 {
-		cont.Procs = append(cont.Procs[:ind], cont.Procs[ind+1:]...)
-		cont.Nprocs -= 1
-	}
-}
-
-/*
-GET /remove?name=<name>&pid=<pid>
-
-Removes PID <pid> from  process list of container <name>
-Removes container if process list is empty
-*/
-func removeCont(ctx *gin.Context) {
-	var ind int = -1
-	name := ctx.Query("name")
-	pid, err_atoi := strconv.Atoi(ctx.Query("pid"))
-
-	// query validation
+	name = req.GetName()
 	if name == "" {
-		ctx.IndentedJSON(400, "Need name query parameter")
-		return
+		name = id
 	}
-	if err_atoi != nil {
-		ctx.IndentedJSON(400, "Need proper pid query parameter")
-		return
+	init_args := []string{"run", req.Image, "--name", name}
+	if req.GetUser() != 0 {
+		init_args = append(init_args, "--user", strconv.Itoa(int(req.GetUser())))
 	}
+	init_args = append(init_args, "--", req.Command)
+	cmd := exec.Command("dockmanc", append(init_args, req.Args...)...)
 
-	// find container using name from list (really need to make it a map)
-	for i, cont := range containers {
-		if cont.Name == name {
-			ind = i
-		}
+	// create pty
+	f, err := pty.Start(cmd)
+	if err != nil {
+		return &pb.CreateContainerResponse{Id: "-1"}, err
 	}
-	if ind == -1 {
-		return
-	}
+	containers = append(containers, utils.ContState{Name: name, Image: req.Image, Nprocs: 1, Procs: []int{cmd.Process.Pid}, Running: true, Rooted: false, Stdin: f, Stdout: f, Stderr: f})
 
-	// remove pid from container list
-	removePid(&containers[ind], pid)
-
-	// remove container if process list is empty
-	if containers[ind].Nprocs == 0 {
-		containers = append(containers[:ind], containers[ind+1:]...)
-
-		// remove cgroup dir
-		cgroup_dir := filepath.Join("/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice/dockerman", name)
-		os.Remove(cgroup_dir)
-	}
-	ctx.IndentedJSON(http.StatusAccepted, "Deleted")
+	return &pb.CreateContainerResponse{Id: name}, nil
 }
 
-/*
-GET /containers
-
-Returns list of container with relevant info as JSON
-*/
-func getContainers(ctx *gin.Context) {
-	ctx.IndentedJSON(http.StatusOK, containers)
-}
-
-/*
-GET /get?name=<name>
-
-Returns info about a specific container as JSON.
-*/
-func getContainer(ctx *gin.Context) {
-	name := ctx.Query("name")
-
-	// query validation
-	if name == "" {
-		return
+func (s *ContainerServer) AttachContainer(stream pb.ContainerService_AttachContainerServer) (err error) {
+	msg, err_stream := stream.Recv()
+	if err_stream != nil {
+		return err_stream
 	}
-
-	//find and return container
+	id := msg.GetContainerId()
+	if id == "" {
+		return errors.New("No container id sent.")
+	}
+	var stdin, stdout, stderr *os.File
 	for _, cont := range containers {
-		if cont.Name == name {
-			ctx.IndentedJSON(http.StatusOK, cont)
-			return
+		if cont.Name == id {
+			stdin = cont.Stdin
+			stdout = cont.Stdout
+			stderr = cont.Stderr
 		}
 	}
-	ctx.IndentedJSON(http.StatusInternalServerError, "Not Found")
-}
-
-/*
-POST /update
-
-Updates a container state, based on name
-*/
-func updateContainer(ctx *gin.Context) {
-	var updCont utils.ContState
-
-	// request validation
-	if err := ctx.BindJSON(&updCont); err != nil {
-		fmt.Println(err)
-		ctx.IndentedJSON(http.StatusInternalServerError, "Not proper request body")
-		return
+	if stdin == nil {
+		fmt.Println("No such container.")
 	}
 
-	// find and update container
-	for i, cont := range containers {
-		if cont.Name == updCont.Name {
-			containers[i] = updCont
-			ctx.IndentedJSON(http.StatusAccepted, "Updated")
+	output := io.MultiReader(stdout, stderr)
+	// input sync
+	go func() {
+		for {
 
-			return
+			msg, err := stream.Recv()
+			if err != nil {
+				return
+			}
+			stdin.Write(msg.GetStdinData())
 		}
+	}()
+
+	// output sync
+	buf := make([]byte, 4096)
+	for {
+		n, err_read := output.Read(buf)
+		if err_read != nil {
+			return err_read
+		}
+		stream.Send(&pb.AttachContainerMessage{Payload: &pb.AttachContainerMessage_StdoutData{buf[:n]}})
 	}
-	ctx.IndentedJSON(http.StatusInternalServerError, "Server couldn't find container with name "+updCont.Name)
 }
 
 var daemon_cmd = &cobra.Command{
@@ -157,23 +106,40 @@ var daemon_cmd = &cobra.Command{
 	Run:   daemonFunc,
 }
 
+var port int
+
 func init() {
 	root_cmd.AddCommand(daemon_cmd)
+	daemon_cmd.Flags().IntVarP(&port, "port", "p", 4033, "Specify an alternate port for the daemon")
 }
 
 func daemonFunc(cmd *cobra.Command, args []string) {
-	err_cgroupdir := os.Mkdir("sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice/dockerman", 0755)
+	// check privileges
+	if os.Getuid() != 0 {
+		fmt.Println("Please run the daemon as root user.")
+		return
+	}
+
+	// create root cgroup if not present
+	root_cgroup := "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice/dockman"
+	err_cgroupdir := os.MkdirAll(root_cgroup, 0755)
 	if err_cgroupdir != nil {
 		fmt.Println("Couldn't set up root cgroup dir", err_cgroupdir)
 		return
 	}
 
-	router := gin.Default()
-	router.POST("/add", addCont)
-	router.GET("/remove", removeCont)
-	router.GET("/containers", getContainers)
-	router.GET("/get", getContainer)
-	router.POST("/update", updateContainer)
+	// change to user
+	os.Chown(root_cgroup, 1000, 1000)
 
-	router.Run("localhost:4033")
+	// create gRPC server
+	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
+	if err != nil {
+		log.Fatalf("failed to listen: %v", err)
+	}
+	s := grpc.NewServer()
+	pb.RegisterContainerServiceServer(s, &ContainerServer{})
+	log.Printf("server listening at %v", lis.Addr())
+	if err := s.Serve(lis); err != nil {
+		log.Fatalf("failed to serve: %v", err)
+	}
 }
