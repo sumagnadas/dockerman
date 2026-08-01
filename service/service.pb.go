@@ -29,7 +29,7 @@ type CreateContainerRequest struct {
 	User          *int32                 `protobuf:"varint,3,opt,name=user,proto3,oneof" json:"user,omitempty"`
 	Command       string                 `protobuf:"bytes,4,opt,name=command,proto3" json:"command,omitempty"`
 	Args          []string               `protobuf:"bytes,5,rep,name=args,proto3" json:"args,omitempty"`
-	Rooted        bool                   `protobuf:"varint,6,opt,name=rooted,proto3" json:"rooted,omitempty"`
+	Pty           bool                   `protobuf:"varint,6,opt,name=pty,proto3" json:"pty,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -99,9 +99,9 @@ func (x *CreateContainerRequest) GetArgs() []string {
 	return nil
 }
 
-func (x *CreateContainerRequest) GetRooted() bool {
+func (x *CreateContainerRequest) GetPty() bool {
 	if x != nil {
-		return x.Rooted
+		return x.Pty
 	}
 	return false
 }
@@ -699,14 +699,14 @@ var File_service_proto protoreflect.FileDescriptor
 
 const file_service_proto_rawDesc = "" +
 	"\n" +
-	"\rservice.proto\x12\tdockerman\"\xb8\x01\n" +
+	"\rservice.proto\x12\tdockerman\"\xb2\x01\n" +
 	"\x16CreateContainerRequest\x12\x17\n" +
 	"\x04name\x18\x01 \x01(\tH\x00R\x04name\x88\x01\x01\x12\x14\n" +
 	"\x05image\x18\x02 \x01(\tR\x05image\x12\x17\n" +
 	"\x04user\x18\x03 \x01(\x05H\x01R\x04user\x88\x01\x01\x12\x18\n" +
 	"\acommand\x18\x04 \x01(\tR\acommand\x12\x12\n" +
-	"\x04args\x18\x05 \x03(\tR\x04args\x12\x16\n" +
-	"\x06rooted\x18\x06 \x01(\bR\x06rootedB\a\n" +
+	"\x04args\x18\x05 \x03(\tR\x04args\x12\x10\n" +
+	"\x03pty\x18\x06 \x01(\bR\x03ptyB\a\n" +
 	"\x05_nameB\a\n" +
 	"\x05_user\"$\n" +
 	"\x12ContainerIdRequest\x12\x0e\n" +

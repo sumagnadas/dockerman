@@ -51,7 +51,7 @@ message CreateContainerRequest {
     optional int32  user    = 3;
     string          command = 4;
     repeated string args    = 5;
-    bool            rooted  = 6;
+    bool            pty     = 6;
 }
 
 message ContainerIdRequest {

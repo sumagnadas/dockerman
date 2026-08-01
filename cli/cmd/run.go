@@ -22,12 +22,13 @@ var run_cmd = &cobra.Command{
 	Run:   runFunc,
 }
 
-var user bool
+var user, pty bool
 var name, addr string
 
 func init() {
 	root_cmd.AddCommand(run_cmd)
-	run_cmd.Flags().BoolVarP(&user, "user", "u", false, "Detach the stdin of the running command ")
+	run_cmd.Flags().BoolVarP(&user, "user", "u", false, "Start an unprivileged container, mapping the current UID")
+	run_cmd.Flags().BoolVarP(&pty, "tty", "t", false, "Allocate a pseudo-TTY")
 	run_cmd.Flags().StringVar(&name, "name", "", "Name of the container")
 	run_cmd.Flags().StringVar(&addr, "addr", "localhost:4033", "Address of the daemon")
 }
@@ -42,7 +43,7 @@ func runFunc(cmd *cobra.Command, args []string) {
 	}
 	defer conn.Close()
 	c := pb.NewContainerServiceClient(conn)
-	cont_request := pb.CreateContainerRequest{Image: args[0], Command: args[1], Args: args[2:]}
+	cont_request := pb.CreateContainerRequest{Image: args[0], Command: args[1], Args: args[2:], Pty: pty}
 
 	// if unprivileged container required
 	if user {
@@ -53,7 +54,7 @@ func runFunc(cmd *cobra.Command, args []string) {
 	// Create container
 	r, err := c.CreateContainer(context.Background(), &cont_request)
 	if err != nil {
-		log.Fatalf("could not greet: %v", err)
+		log.Fatalf("could not create container: %v", err)
 	}
 	log.Printf("Id: %s", r.GetId())
 
@@ -67,8 +68,10 @@ func runFunc(cmd *cobra.Command, args []string) {
 	fmt.Println("Connecting to container")
 
 	// put local terminal in raw mode, restore on exit
-	oldState, _ := term.MakeRaw(int(os.Stdin.Fd()))
-	defer term.Restore(int(os.Stdin.Fd()), oldState)
+	if pty {
+		oldState, _ := term.MakeRaw(int(os.Stdin.Fd()))
+		defer term.Restore(int(os.Stdin.Fd()), oldState)
+	}
 
 	// stdin
 	go func() {

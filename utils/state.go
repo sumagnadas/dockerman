@@ -1,6 +1,8 @@
 package utils
 
-import "os"
+import (
+	"io"
+)
 
 type ContState struct {
 	Name    string `json:"name"`
@@ -9,7 +11,7 @@ type ContState struct {
 	Procs   []int  `json:"procs"`   // PID of the main/starting process(es)
 	Running bool   `json:"running"` // Status of the container (Running/stopped)
 	Rooted  bool   `json:"rooted"`
-	Stdin   *os.File
-	Stdout  *os.File
-	Stderr  *os.File
+	Stdin   io.Writer
+	Stdout  io.Reader
+	Stderr  io.Reader
 }

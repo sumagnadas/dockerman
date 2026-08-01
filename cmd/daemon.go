@@ -16,6 +16,7 @@ import (
 
 	"github.com/creack/pty"
 	"github.com/spf13/cobra"
+	"golang.org/x/sys/unix"
 	"google.golang.org/grpc"
 )
 
@@ -27,6 +28,7 @@ type ContainerServer struct {
 
 func (s *ContainerServer) CreateContainer(ctx context.Context, req *pb.CreateContainerRequest) (*pb.CreateContainerResponse, error) {
 	var id, name string
+	rooted := true
 
 	newid, err_hash := utils.GenerateRandomHash(8) // generate a id based on random hash
 	if err_hash != nil {
@@ -41,16 +43,46 @@ func (s *ContainerServer) CreateContainer(ctx context.Context, req *pb.CreateCon
 	init_args := []string{"run", req.Image, "--name", name}
 	if req.GetUser() != 0 {
 		init_args = append(init_args, "--user", strconv.Itoa(int(req.GetUser())))
+		rooted = false
 	}
 	init_args = append(init_args, "--", req.Command)
 	cmd := exec.Command("dockmanc", append(init_args, req.Args...)...)
 
-	// create pty
-	f, err := pty.Start(cmd)
-	if err != nil {
-		return &pb.CreateContainerResponse{Id: "-1"}, err
+	var stdin io.Writer
+	var stdout, stderr io.Reader
+
+	// start command with or without pty
+	if req.GetPty() {
+		f, err := pty.Start(cmd)
+		if err != nil {
+			return &pb.CreateContainerResponse{Id: "-1"}, err
+		}
+		stdin = f
+		stdout = f
+		stderr = f
+	} else {
+		// assign the pipes before cmd is started
+		stdin_pipe, err_stdin := cmd.StdinPipe()
+		stdout_pipe, err_stdout := cmd.StdoutPipe()
+		stderr_pipe, err_stderr := cmd.StderrPipe()
+
+		err_start := cmd.Start()
+		if err_start != nil {
+			return &pb.CreateContainerResponse{Id: "-1"}, err_start
+		}
+		if err_stdin != nil || err_stdout != nil || err_stderr != nil {
+			cmd.Process.Signal(unix.SIGTERM)
+			fmt.Println(err_stdin)
+			fmt.Println(err_stdout)
+			fmt.Println(err_stderr)
+			return &pb.CreateContainerResponse{Id: "-1"}, errors.New("Can't connect pipe.")
+		}
+
+		stdin = stdin_pipe
+		stdout = stdout_pipe
+		stderr = stderr_pipe
 	}
-	containers = append(containers, utils.ContState{Name: name, Image: req.Image, Nprocs: 1, Procs: []int{cmd.Process.Pid}, Running: true, Rooted: false, Stdin: f, Stdout: f, Stderr: f})
+	containers = append(containers, utils.ContState{Name: name, Image: req.Image, Nprocs: 1, Procs: []int{cmd.Process.Pid}, Running: true, Rooted: rooted, Stdin: stdin, Stdout: stdout, Stderr: stderr})
 
 	return &pb.CreateContainerResponse{Id: name}, nil
 }
@@ -64,7 +96,9 @@ func (s *ContainerServer) AttachContainer(stream pb.ContainerService_AttachConta
 	if id == "" {
 		return errors.New("No container id sent.")
 	}
-	var stdin, stdout, stderr *os.File
+
+	var stdin io.Writer
+	var stdout, stderr io.Reader
 	for _, cont := range containers {
 		if cont.Name == id {
 			stdin = cont.Stdin
