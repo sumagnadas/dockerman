@@ -151,14 +151,10 @@ func (x *ContainerIdRequest) GetId() string {
 }
 
 type ContainerStatusRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// Types that are valid to be assigned to ContainerId:
-	//
-	//	*ContainerStatusRequest_Name
-	//	*ContainerStatusRequest_Id
-	ContainerId   isContainerStatusRequest_ContainerId `protobuf_oneof:"container_id"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	ContainerIdName string                 `protobuf:"bytes,1,opt,name=container_id_name,json=containerIdName,proto3" json:"container_id_name,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
 }
 
 func (x *ContainerStatusRequest) Reset() {
@@ -191,46 +187,12 @@ func (*ContainerStatusRequest) Descriptor() ([]byte, []int) {
 	return file_service_proto_rawDescGZIP(), []int{2}
 }
 
-func (x *ContainerStatusRequest) GetContainerId() isContainerStatusRequest_ContainerId {
+func (x *ContainerStatusRequest) GetContainerIdName() string {
 	if x != nil {
-		return x.ContainerId
-	}
-	return nil
-}
-
-func (x *ContainerStatusRequest) GetName() string {
-	if x != nil {
-		if x, ok := x.ContainerId.(*ContainerStatusRequest_Name); ok {
-			return x.Name
-		}
+		return x.ContainerIdName
 	}
 	return ""
 }
-
-func (x *ContainerStatusRequest) GetId() string {
-	if x != nil {
-		if x, ok := x.ContainerId.(*ContainerStatusRequest_Id); ok {
-			return x.Id
-		}
-	}
-	return ""
-}
-
-type isContainerStatusRequest_ContainerId interface {
-	isContainerStatusRequest_ContainerId()
-}
-
-type ContainerStatusRequest_Name struct {
-	Name string `protobuf:"bytes,1,opt,name=name,proto3,oneof"`
-}
-
-type ContainerStatusRequest_Id struct {
-	Id string `protobuf:"bytes,2,opt,name=id,proto3,oneof"`
-}
-
-func (*ContainerStatusRequest_Name) isContainerStatusRequest_ContainerId() {}
-
-func (*ContainerStatusRequest_Id) isContainerStatusRequest_ContainerId() {}
 
 type ExecRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
@@ -710,11 +672,9 @@ const file_service_proto_rawDesc = "" +
 	"\x05_nameB\a\n" +
 	"\x05_user\"$\n" +
 	"\x12ContainerIdRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\"P\n" +
-	"\x16ContainerStatusRequest\x12\x14\n" +
-	"\x04name\x18\x01 \x01(\tH\x00R\x04name\x12\x10\n" +
-	"\x02id\x18\x02 \x01(\tH\x00R\x02idB\x0e\n" +
-	"\fcontainer_id\"O\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\"D\n" +
+	"\x16ContainerStatusRequest\x12*\n" +
+	"\x11container_id_name\x18\x01 \x01(\tR\x0fcontainerIdName\"O\n" +
 	"\vExecRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x18\n" +
 	"\acommand\x18\x02 \x01(\tR\acommand\x12\x12\n" +
@@ -811,10 +771,6 @@ func file_service_proto_init() {
 		return
 	}
 	file_service_proto_msgTypes[0].OneofWrappers = []any{}
-	file_service_proto_msgTypes[2].OneofWrappers = []any{
-		(*ContainerStatusRequest_Name)(nil),
-		(*ContainerStatusRequest_Id)(nil),
-	}
 	file_service_proto_msgTypes[10].OneofWrappers = []any{
 		(*AttachContainerMessage_StdinData)(nil),
 		(*AttachContainerMessage_StdoutData)(nil),

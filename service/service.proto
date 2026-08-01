@@ -59,10 +59,7 @@ message ContainerIdRequest {
 }
 
 message ContainerStatusRequest {
-    oneof container_id {
-        string name = 1;
-        string id   = 2;
-    }
+    string container_id_name = 1;
 }
 
 message ExecRequest {

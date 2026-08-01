@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"context"
-	"flag"
 	"fmt"
 	"log"
 	"os"
@@ -23,19 +22,16 @@ var run_cmd = &cobra.Command{
 }
 
 var user, pty bool
-var name, addr string
+var name string
 
 func init() {
 	root_cmd.AddCommand(run_cmd)
 	run_cmd.Flags().BoolVarP(&user, "user", "u", false, "Start an unprivileged container, mapping the current UID")
 	run_cmd.Flags().BoolVarP(&pty, "tty", "t", false, "Allocate a pseudo-TTY")
 	run_cmd.Flags().StringVar(&name, "name", "", "Name of the container")
-	run_cmd.Flags().StringVar(&addr, "addr", "localhost:4033", "Address of the daemon")
 }
 
 func runFunc(cmd *cobra.Command, args []string) {
-	flag.Parse()
-
 	// Set up a connection to the server.
 	conn, err := grpc.NewClient(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
@@ -43,7 +39,7 @@ func runFunc(cmd *cobra.Command, args []string) {
 	}
 	defer conn.Close()
 	c := pb.NewContainerServiceClient(conn)
-	cont_request := pb.CreateContainerRequest{Image: args[0], Command: args[1], Args: args[2:], Pty: pty}
+	cont_request := pb.CreateContainerRequest{Name: &name, Image: args[0], Command: args[1], Args: args[2:], Pty: pty}
 
 	// if unprivileged container required
 	if user {
