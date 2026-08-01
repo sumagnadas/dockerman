@@ -35,7 +35,7 @@ func infoFunc(cmd *cobra.Command, args []string) {
 	defer conn.Close()
 	c := pb.NewContainerServiceClient(conn)
 
-	r, err := c.ContainerStatus(context.Background(), &pb.ContainerStatusRequest{ContainerIdName: args[0]})
+	r, err := c.ContainerStatus(context.Background(), &pb.ContainerIdNameRequest{ContainerIdName: args[0]})
 	if err != nil {
 		log.Fatalf("could not get container info: %v", err)
 	}

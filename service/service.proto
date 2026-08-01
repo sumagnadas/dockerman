@@ -10,27 +10,27 @@ service ContainerService {
     rpc AttachContainer(stream AttachContainerMessage) returns (stream AttachContainerMessage) {}
 
     // StartContainer starts the container.
-    rpc StartContainer(ContainerIdRequest) returns (EmptyMessage) {}
+    rpc StartContainer(ContainerIdNameRequest) returns (EmptyMessage) {}
 
     // StopContainer stops a running container with a grace period (i.e., timeout).
     // This call is idempotent, and must not return an error if the container has
     // already been stopped.
     // The runtime must forcibly kill the container after the grace period is
     // reached.
-    rpc StopContainer(ContainerIdRequest) returns (EmptyMessage) {}
+    rpc StopContainer(ContainerIdNameRequest) returns (EmptyMessage) {}
 
     // RemoveContainer removes the container. If the container is running, the
     // container must be forcibly removed.
     // This call is idempotent, and must not return an error if the container has
     // already been removed.
-    rpc RemoveContainer(ContainerIdRequest) returns (EmptyMessage) {}
+    rpc RemoveContainer(ContainerIdNameRequest) returns (EmptyMessage) {}
 
     // ListContainers lists all containers by filters.
     rpc ListContainers(EmptyMessage) returns (ListContainersResponse) {}
 
     // ContainerStatus returns status of the container. If the container is not
     // present, returns an error.
-    rpc ContainerStatus(ContainerStatusRequest) returns (ContainerStatusResponse) {}
+    rpc ContainerStatus(ContainerIdNameRequest) returns (ContainerStatusResponse) {}
 
     // ReopenContainerLog asks runtime to reopen the stdout/stderr log file
     // for the container. This is often called after the log file has been
@@ -54,11 +54,7 @@ message CreateContainerRequest {
     bool            pty     = 6;
 }
 
-message ContainerIdRequest {
-    string id = 1;
-}
-
-message ContainerStatusRequest {
+message ContainerIdNameRequest {
     string container_id_name = 1;
 }
 

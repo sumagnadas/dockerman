@@ -106,72 +106,28 @@ func (x *CreateContainerRequest) GetPty() bool {
 	return false
 }
 
-type ContainerIdRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *ContainerIdRequest) Reset() {
-	*x = ContainerIdRequest{}
-	mi := &file_service_proto_msgTypes[1]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *ContainerIdRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ContainerIdRequest) ProtoMessage() {}
-
-func (x *ContainerIdRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_service_proto_msgTypes[1]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ContainerIdRequest.ProtoReflect.Descriptor instead.
-func (*ContainerIdRequest) Descriptor() ([]byte, []int) {
-	return file_service_proto_rawDescGZIP(), []int{1}
-}
-
-func (x *ContainerIdRequest) GetId() string {
-	if x != nil {
-		return x.Id
-	}
-	return ""
-}
-
-type ContainerStatusRequest struct {
+type ContainerIdNameRequest struct {
 	state           protoimpl.MessageState `protogen:"open.v1"`
 	ContainerIdName string                 `protobuf:"bytes,1,opt,name=container_id_name,json=containerIdName,proto3" json:"container_id_name,omitempty"`
 	unknownFields   protoimpl.UnknownFields
 	sizeCache       protoimpl.SizeCache
 }
 
-func (x *ContainerStatusRequest) Reset() {
-	*x = ContainerStatusRequest{}
-	mi := &file_service_proto_msgTypes[2]
+func (x *ContainerIdNameRequest) Reset() {
+	*x = ContainerIdNameRequest{}
+	mi := &file_service_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *ContainerStatusRequest) String() string {
+func (x *ContainerIdNameRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*ContainerStatusRequest) ProtoMessage() {}
+func (*ContainerIdNameRequest) ProtoMessage() {}
 
-func (x *ContainerStatusRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_service_proto_msgTypes[2]
+func (x *ContainerIdNameRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_service_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -182,12 +138,12 @@ func (x *ContainerStatusRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use ContainerStatusRequest.ProtoReflect.Descriptor instead.
-func (*ContainerStatusRequest) Descriptor() ([]byte, []int) {
-	return file_service_proto_rawDescGZIP(), []int{2}
+// Deprecated: Use ContainerIdNameRequest.ProtoReflect.Descriptor instead.
+func (*ContainerIdNameRequest) Descriptor() ([]byte, []int) {
+	return file_service_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *ContainerStatusRequest) GetContainerIdName() string {
+func (x *ContainerIdNameRequest) GetContainerIdName() string {
 	if x != nil {
 		return x.ContainerIdName
 	}
@@ -205,7 +161,7 @@ type ExecRequest struct {
 
 func (x *ExecRequest) Reset() {
 	*x = ExecRequest{}
-	mi := &file_service_proto_msgTypes[3]
+	mi := &file_service_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -217,7 +173,7 @@ func (x *ExecRequest) String() string {
 func (*ExecRequest) ProtoMessage() {}
 
 func (x *ExecRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_service_proto_msgTypes[3]
+	mi := &file_service_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -230,7 +186,7 @@ func (x *ExecRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ExecRequest.ProtoReflect.Descriptor instead.
 func (*ExecRequest) Descriptor() ([]byte, []int) {
-	return file_service_proto_rawDescGZIP(), []int{3}
+	return file_service_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *ExecRequest) GetName() string {
@@ -263,7 +219,7 @@ type EmptyMessage struct {
 
 func (x *EmptyMessage) Reset() {
 	*x = EmptyMessage{}
-	mi := &file_service_proto_msgTypes[4]
+	mi := &file_service_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -275,7 +231,7 @@ func (x *EmptyMessage) String() string {
 func (*EmptyMessage) ProtoMessage() {}
 
 func (x *EmptyMessage) ProtoReflect() protoreflect.Message {
-	mi := &file_service_proto_msgTypes[4]
+	mi := &file_service_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -288,7 +244,7 @@ func (x *EmptyMessage) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EmptyMessage.ProtoReflect.Descriptor instead.
 func (*EmptyMessage) Descriptor() ([]byte, []int) {
-	return file_service_proto_rawDescGZIP(), []int{4}
+	return file_service_proto_rawDescGZIP(), []int{3}
 }
 
 type CreateContainerResponse struct {
@@ -300,7 +256,7 @@ type CreateContainerResponse struct {
 
 func (x *CreateContainerResponse) Reset() {
 	*x = CreateContainerResponse{}
-	mi := &file_service_proto_msgTypes[5]
+	mi := &file_service_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -312,7 +268,7 @@ func (x *CreateContainerResponse) String() string {
 func (*CreateContainerResponse) ProtoMessage() {}
 
 func (x *CreateContainerResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_service_proto_msgTypes[5]
+	mi := &file_service_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -325,7 +281,7 @@ func (x *CreateContainerResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateContainerResponse.ProtoReflect.Descriptor instead.
 func (*CreateContainerResponse) Descriptor() ([]byte, []int) {
-	return file_service_proto_rawDescGZIP(), []int{5}
+	return file_service_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *CreateContainerResponse) GetId() string {
@@ -349,7 +305,7 @@ type Container struct {
 
 func (x *Container) Reset() {
 	*x = Container{}
-	mi := &file_service_proto_msgTypes[6]
+	mi := &file_service_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -361,7 +317,7 @@ func (x *Container) String() string {
 func (*Container) ProtoMessage() {}
 
 func (x *Container) ProtoReflect() protoreflect.Message {
-	mi := &file_service_proto_msgTypes[6]
+	mi := &file_service_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -374,7 +330,7 @@ func (x *Container) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Container.ProtoReflect.Descriptor instead.
 func (*Container) Descriptor() ([]byte, []int) {
-	return file_service_proto_rawDescGZIP(), []int{6}
+	return file_service_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *Container) GetId() string {
@@ -428,7 +384,7 @@ type ListContainersResponse struct {
 
 func (x *ListContainersResponse) Reset() {
 	*x = ListContainersResponse{}
-	mi := &file_service_proto_msgTypes[7]
+	mi := &file_service_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -440,7 +396,7 @@ func (x *ListContainersResponse) String() string {
 func (*ListContainersResponse) ProtoMessage() {}
 
 func (x *ListContainersResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_service_proto_msgTypes[7]
+	mi := &file_service_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -453,7 +409,7 @@ func (x *ListContainersResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListContainersResponse.ProtoReflect.Descriptor instead.
 func (*ListContainersResponse) Descriptor() ([]byte, []int) {
-	return file_service_proto_rawDescGZIP(), []int{7}
+	return file_service_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *ListContainersResponse) GetConts() []*ContainerStatusResponse {
@@ -473,7 +429,7 @@ type ContainerStatusResponse struct {
 
 func (x *ContainerStatusResponse) Reset() {
 	*x = ContainerStatusResponse{}
-	mi := &file_service_proto_msgTypes[8]
+	mi := &file_service_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -485,7 +441,7 @@ func (x *ContainerStatusResponse) String() string {
 func (*ContainerStatusResponse) ProtoMessage() {}
 
 func (x *ContainerStatusResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_service_proto_msgTypes[8]
+	mi := &file_service_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -498,7 +454,7 @@ func (x *ContainerStatusResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ContainerStatusResponse.ProtoReflect.Descriptor instead.
 func (*ContainerStatusResponse) Descriptor() ([]byte, []int) {
-	return file_service_proto_rawDescGZIP(), []int{8}
+	return file_service_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *ContainerStatusResponse) GetState() string {
@@ -524,7 +480,7 @@ type ExecResponse struct {
 
 func (x *ExecResponse) Reset() {
 	*x = ExecResponse{}
-	mi := &file_service_proto_msgTypes[9]
+	mi := &file_service_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -536,7 +492,7 @@ func (x *ExecResponse) String() string {
 func (*ExecResponse) ProtoMessage() {}
 
 func (x *ExecResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_service_proto_msgTypes[9]
+	mi := &file_service_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -549,7 +505,7 @@ func (x *ExecResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ExecResponse.ProtoReflect.Descriptor instead.
 func (*ExecResponse) Descriptor() ([]byte, []int) {
-	return file_service_proto_rawDescGZIP(), []int{9}
+	return file_service_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *ExecResponse) GetUrl() string {
@@ -573,7 +529,7 @@ type AttachContainerMessage struct {
 
 func (x *AttachContainerMessage) Reset() {
 	*x = AttachContainerMessage{}
-	mi := &file_service_proto_msgTypes[10]
+	mi := &file_service_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -585,7 +541,7 @@ func (x *AttachContainerMessage) String() string {
 func (*AttachContainerMessage) ProtoMessage() {}
 
 func (x *AttachContainerMessage) ProtoReflect() protoreflect.Message {
-	mi := &file_service_proto_msgTypes[10]
+	mi := &file_service_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -598,7 +554,7 @@ func (x *AttachContainerMessage) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AttachContainerMessage.ProtoReflect.Descriptor instead.
 func (*AttachContainerMessage) Descriptor() ([]byte, []int) {
-	return file_service_proto_rawDescGZIP(), []int{10}
+	return file_service_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *AttachContainerMessage) GetPayload() isAttachContainerMessage_Payload {
@@ -670,10 +626,8 @@ const file_service_proto_rawDesc = "" +
 	"\x04args\x18\x05 \x03(\tR\x04args\x12\x10\n" +
 	"\x03pty\x18\x06 \x01(\bR\x03ptyB\a\n" +
 	"\x05_nameB\a\n" +
-	"\x05_user\"$\n" +
-	"\x12ContainerIdRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\"D\n" +
-	"\x16ContainerStatusRequest\x12*\n" +
+	"\x05_user\"D\n" +
+	"\x16ContainerIdNameRequest\x12*\n" +
 	"\x11container_id_name\x18\x01 \x01(\tR\x0fcontainerIdName\"O\n" +
 	"\vExecRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x18\n" +
@@ -702,15 +656,15 @@ const file_service_proto_rawDesc = "" +
 	"\vstdout_data\x18\x02 \x01(\fH\x00R\n" +
 	"stdoutData\x12#\n" +
 	"\fcontainer_id\x18\x03 \x01(\tH\x00R\vcontainerIdB\t\n" +
-	"\apayload2\x98\x05\n" +
+	"\apayload2\xa4\x05\n" +
 	"\x10ContainerService\x12Z\n" +
 	"\x0fCreateContainer\x12!.dockerman.CreateContainerRequest\x1a\".dockerman.CreateContainerResponse\"\x00\x12]\n" +
-	"\x0fAttachContainer\x12!.dockerman.AttachContainerMessage\x1a!.dockerman.AttachContainerMessage\"\x00(\x010\x01\x12J\n" +
-	"\x0eStartContainer\x12\x1d.dockerman.ContainerIdRequest\x1a\x17.dockerman.EmptyMessage\"\x00\x12I\n" +
-	"\rStopContainer\x12\x1d.dockerman.ContainerIdRequest\x1a\x17.dockerman.EmptyMessage\"\x00\x12K\n" +
-	"\x0fRemoveContainer\x12\x1d.dockerman.ContainerIdRequest\x1a\x17.dockerman.EmptyMessage\"\x00\x12N\n" +
+	"\x0fAttachContainer\x12!.dockerman.AttachContainerMessage\x1a!.dockerman.AttachContainerMessage\"\x00(\x010\x01\x12N\n" +
+	"\x0eStartContainer\x12!.dockerman.ContainerIdNameRequest\x1a\x17.dockerman.EmptyMessage\"\x00\x12M\n" +
+	"\rStopContainer\x12!.dockerman.ContainerIdNameRequest\x1a\x17.dockerman.EmptyMessage\"\x00\x12O\n" +
+	"\x0fRemoveContainer\x12!.dockerman.ContainerIdNameRequest\x1a\x17.dockerman.EmptyMessage\"\x00\x12N\n" +
 	"\x0eListContainers\x12\x17.dockerman.EmptyMessage\x1a!.dockerman.ListContainersResponse\"\x00\x12Z\n" +
-	"\x0fContainerStatus\x12!.dockerman.ContainerStatusRequest\x1a\".dockerman.ContainerStatusResponse\"\x00\x129\n" +
+	"\x0fContainerStatus\x12!.dockerman.ContainerIdNameRequest\x1a\".dockerman.ContainerStatusResponse\"\x00\x129\n" +
 	"\x04Exec\x12\x16.dockerman.ExecRequest\x1a\x17.dockerman.ExecResponse\"\x00B\x0eZ\fdock/serviceb\x06proto3"
 
 var (
@@ -725,39 +679,38 @@ func file_service_proto_rawDescGZIP() []byte {
 	return file_service_proto_rawDescData
 }
 
-var file_service_proto_msgTypes = make([]protoimpl.MessageInfo, 11)
+var file_service_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
 var file_service_proto_goTypes = []any{
 	(*CreateContainerRequest)(nil),  // 0: dockerman.CreateContainerRequest
-	(*ContainerIdRequest)(nil),      // 1: dockerman.ContainerIdRequest
-	(*ContainerStatusRequest)(nil),  // 2: dockerman.ContainerStatusRequest
-	(*ExecRequest)(nil),             // 3: dockerman.ExecRequest
-	(*EmptyMessage)(nil),            // 4: dockerman.EmptyMessage
-	(*CreateContainerResponse)(nil), // 5: dockerman.CreateContainerResponse
-	(*Container)(nil),               // 6: dockerman.Container
-	(*ListContainersResponse)(nil),  // 7: dockerman.ListContainersResponse
-	(*ContainerStatusResponse)(nil), // 8: dockerman.ContainerStatusResponse
-	(*ExecResponse)(nil),            // 9: dockerman.ExecResponse
-	(*AttachContainerMessage)(nil),  // 10: dockerman.AttachContainerMessage
+	(*ContainerIdNameRequest)(nil),  // 1: dockerman.ContainerIdNameRequest
+	(*ExecRequest)(nil),             // 2: dockerman.ExecRequest
+	(*EmptyMessage)(nil),            // 3: dockerman.EmptyMessage
+	(*CreateContainerResponse)(nil), // 4: dockerman.CreateContainerResponse
+	(*Container)(nil),               // 5: dockerman.Container
+	(*ListContainersResponse)(nil),  // 6: dockerman.ListContainersResponse
+	(*ContainerStatusResponse)(nil), // 7: dockerman.ContainerStatusResponse
+	(*ExecResponse)(nil),            // 8: dockerman.ExecResponse
+	(*AttachContainerMessage)(nil),  // 9: dockerman.AttachContainerMessage
 }
 var file_service_proto_depIdxs = []int32{
-	8,  // 0: dockerman.ListContainersResponse.conts:type_name -> dockerman.ContainerStatusResponse
-	6,  // 1: dockerman.ContainerStatusResponse.cont:type_name -> dockerman.Container
+	7,  // 0: dockerman.ListContainersResponse.conts:type_name -> dockerman.ContainerStatusResponse
+	5,  // 1: dockerman.ContainerStatusResponse.cont:type_name -> dockerman.Container
 	0,  // 2: dockerman.ContainerService.CreateContainer:input_type -> dockerman.CreateContainerRequest
-	10, // 3: dockerman.ContainerService.AttachContainer:input_type -> dockerman.AttachContainerMessage
-	1,  // 4: dockerman.ContainerService.StartContainer:input_type -> dockerman.ContainerIdRequest
-	1,  // 5: dockerman.ContainerService.StopContainer:input_type -> dockerman.ContainerIdRequest
-	1,  // 6: dockerman.ContainerService.RemoveContainer:input_type -> dockerman.ContainerIdRequest
-	4,  // 7: dockerman.ContainerService.ListContainers:input_type -> dockerman.EmptyMessage
-	2,  // 8: dockerman.ContainerService.ContainerStatus:input_type -> dockerman.ContainerStatusRequest
-	3,  // 9: dockerman.ContainerService.Exec:input_type -> dockerman.ExecRequest
-	5,  // 10: dockerman.ContainerService.CreateContainer:output_type -> dockerman.CreateContainerResponse
-	10, // 11: dockerman.ContainerService.AttachContainer:output_type -> dockerman.AttachContainerMessage
-	4,  // 12: dockerman.ContainerService.StartContainer:output_type -> dockerman.EmptyMessage
-	4,  // 13: dockerman.ContainerService.StopContainer:output_type -> dockerman.EmptyMessage
-	4,  // 14: dockerman.ContainerService.RemoveContainer:output_type -> dockerman.EmptyMessage
-	7,  // 15: dockerman.ContainerService.ListContainers:output_type -> dockerman.ListContainersResponse
-	8,  // 16: dockerman.ContainerService.ContainerStatus:output_type -> dockerman.ContainerStatusResponse
-	9,  // 17: dockerman.ContainerService.Exec:output_type -> dockerman.ExecResponse
+	9,  // 3: dockerman.ContainerService.AttachContainer:input_type -> dockerman.AttachContainerMessage
+	1,  // 4: dockerman.ContainerService.StartContainer:input_type -> dockerman.ContainerIdNameRequest
+	1,  // 5: dockerman.ContainerService.StopContainer:input_type -> dockerman.ContainerIdNameRequest
+	1,  // 6: dockerman.ContainerService.RemoveContainer:input_type -> dockerman.ContainerIdNameRequest
+	3,  // 7: dockerman.ContainerService.ListContainers:input_type -> dockerman.EmptyMessage
+	1,  // 8: dockerman.ContainerService.ContainerStatus:input_type -> dockerman.ContainerIdNameRequest
+	2,  // 9: dockerman.ContainerService.Exec:input_type -> dockerman.ExecRequest
+	4,  // 10: dockerman.ContainerService.CreateContainer:output_type -> dockerman.CreateContainerResponse
+	9,  // 11: dockerman.ContainerService.AttachContainer:output_type -> dockerman.AttachContainerMessage
+	3,  // 12: dockerman.ContainerService.StartContainer:output_type -> dockerman.EmptyMessage
+	3,  // 13: dockerman.ContainerService.StopContainer:output_type -> dockerman.EmptyMessage
+	3,  // 14: dockerman.ContainerService.RemoveContainer:output_type -> dockerman.EmptyMessage
+	6,  // 15: dockerman.ContainerService.ListContainers:output_type -> dockerman.ListContainersResponse
+	7,  // 16: dockerman.ContainerService.ContainerStatus:output_type -> dockerman.ContainerStatusResponse
+	8,  // 17: dockerman.ContainerService.Exec:output_type -> dockerman.ExecResponse
 	10, // [10:18] is the sub-list for method output_type
 	2,  // [2:10] is the sub-list for method input_type
 	2,  // [2:2] is the sub-list for extension type_name
@@ -771,7 +724,7 @@ func file_service_proto_init() {
 		return
 	}
 	file_service_proto_msgTypes[0].OneofWrappers = []any{}
-	file_service_proto_msgTypes[10].OneofWrappers = []any{
+	file_service_proto_msgTypes[9].OneofWrappers = []any{
 		(*AttachContainerMessage_StdinData)(nil),
 		(*AttachContainerMessage_StdoutData)(nil),
 		(*AttachContainerMessage_ContainerId)(nil),
@@ -782,7 +735,7 @@ func file_service_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_service_proto_rawDesc), len(file_service_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   11,
+			NumMessages:   10,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

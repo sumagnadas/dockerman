@@ -36,23 +36,23 @@ type ContainerServiceClient interface {
 	CreateContainer(ctx context.Context, in *CreateContainerRequest, opts ...grpc.CallOption) (*CreateContainerResponse, error)
 	AttachContainer(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[AttachContainerMessage, AttachContainerMessage], error)
 	// StartContainer starts the container.
-	StartContainer(ctx context.Context, in *ContainerIdRequest, opts ...grpc.CallOption) (*EmptyMessage, error)
+	StartContainer(ctx context.Context, in *ContainerIdNameRequest, opts ...grpc.CallOption) (*EmptyMessage, error)
 	// StopContainer stops a running container with a grace period (i.e., timeout).
 	// This call is idempotent, and must not return an error if the container has
 	// already been stopped.
 	// The runtime must forcibly kill the container after the grace period is
 	// reached.
-	StopContainer(ctx context.Context, in *ContainerIdRequest, opts ...grpc.CallOption) (*EmptyMessage, error)
+	StopContainer(ctx context.Context, in *ContainerIdNameRequest, opts ...grpc.CallOption) (*EmptyMessage, error)
 	// RemoveContainer removes the container. If the container is running, the
 	// container must be forcibly removed.
 	// This call is idempotent, and must not return an error if the container has
 	// already been removed.
-	RemoveContainer(ctx context.Context, in *ContainerIdRequest, opts ...grpc.CallOption) (*EmptyMessage, error)
+	RemoveContainer(ctx context.Context, in *ContainerIdNameRequest, opts ...grpc.CallOption) (*EmptyMessage, error)
 	// ListContainers lists all containers by filters.
 	ListContainers(ctx context.Context, in *EmptyMessage, opts ...grpc.CallOption) (*ListContainersResponse, error)
 	// ContainerStatus returns status of the container. If the container is not
 	// present, returns an error.
-	ContainerStatus(ctx context.Context, in *ContainerStatusRequest, opts ...grpc.CallOption) (*ContainerStatusResponse, error)
+	ContainerStatus(ctx context.Context, in *ContainerIdNameRequest, opts ...grpc.CallOption) (*ContainerStatusResponse, error)
 	// Exec prepares a streaming endpoint to execute a command in the container.
 	Exec(ctx context.Context, in *ExecRequest, opts ...grpc.CallOption) (*ExecResponse, error)
 }
@@ -88,7 +88,7 @@ func (c *containerServiceClient) AttachContainer(ctx context.Context, opts ...gr
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type ContainerService_AttachContainerClient = grpc.BidiStreamingClient[AttachContainerMessage, AttachContainerMessage]
 
-func (c *containerServiceClient) StartContainer(ctx context.Context, in *ContainerIdRequest, opts ...grpc.CallOption) (*EmptyMessage, error) {
+func (c *containerServiceClient) StartContainer(ctx context.Context, in *ContainerIdNameRequest, opts ...grpc.CallOption) (*EmptyMessage, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(EmptyMessage)
 	err := c.cc.Invoke(ctx, ContainerService_StartContainer_FullMethodName, in, out, cOpts...)
@@ -98,7 +98,7 @@ func (c *containerServiceClient) StartContainer(ctx context.Context, in *Contain
 	return out, nil
 }
 
-func (c *containerServiceClient) StopContainer(ctx context.Context, in *ContainerIdRequest, opts ...grpc.CallOption) (*EmptyMessage, error) {
+func (c *containerServiceClient) StopContainer(ctx context.Context, in *ContainerIdNameRequest, opts ...grpc.CallOption) (*EmptyMessage, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(EmptyMessage)
 	err := c.cc.Invoke(ctx, ContainerService_StopContainer_FullMethodName, in, out, cOpts...)
@@ -108,7 +108,7 @@ func (c *containerServiceClient) StopContainer(ctx context.Context, in *Containe
 	return out, nil
 }
 
-func (c *containerServiceClient) RemoveContainer(ctx context.Context, in *ContainerIdRequest, opts ...grpc.CallOption) (*EmptyMessage, error) {
+func (c *containerServiceClient) RemoveContainer(ctx context.Context, in *ContainerIdNameRequest, opts ...grpc.CallOption) (*EmptyMessage, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(EmptyMessage)
 	err := c.cc.Invoke(ctx, ContainerService_RemoveContainer_FullMethodName, in, out, cOpts...)
@@ -128,7 +128,7 @@ func (c *containerServiceClient) ListContainers(ctx context.Context, in *EmptyMe
 	return out, nil
 }
 
-func (c *containerServiceClient) ContainerStatus(ctx context.Context, in *ContainerStatusRequest, opts ...grpc.CallOption) (*ContainerStatusResponse, error) {
+func (c *containerServiceClient) ContainerStatus(ctx context.Context, in *ContainerIdNameRequest, opts ...grpc.CallOption) (*ContainerStatusResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ContainerStatusResponse)
 	err := c.cc.Invoke(ctx, ContainerService_ContainerStatus_FullMethodName, in, out, cOpts...)
@@ -155,23 +155,23 @@ type ContainerServiceServer interface {
 	CreateContainer(context.Context, *CreateContainerRequest) (*CreateContainerResponse, error)
 	AttachContainer(grpc.BidiStreamingServer[AttachContainerMessage, AttachContainerMessage]) error
 	// StartContainer starts the container.
-	StartContainer(context.Context, *ContainerIdRequest) (*EmptyMessage, error)
+	StartContainer(context.Context, *ContainerIdNameRequest) (*EmptyMessage, error)
 	// StopContainer stops a running container with a grace period (i.e., timeout).
 	// This call is idempotent, and must not return an error if the container has
 	// already been stopped.
 	// The runtime must forcibly kill the container after the grace period is
 	// reached.
-	StopContainer(context.Context, *ContainerIdRequest) (*EmptyMessage, error)
+	StopContainer(context.Context, *ContainerIdNameRequest) (*EmptyMessage, error)
 	// RemoveContainer removes the container. If the container is running, the
 	// container must be forcibly removed.
 	// This call is idempotent, and must not return an error if the container has
 	// already been removed.
-	RemoveContainer(context.Context, *ContainerIdRequest) (*EmptyMessage, error)
+	RemoveContainer(context.Context, *ContainerIdNameRequest) (*EmptyMessage, error)
 	// ListContainers lists all containers by filters.
 	ListContainers(context.Context, *EmptyMessage) (*ListContainersResponse, error)
 	// ContainerStatus returns status of the container. If the container is not
 	// present, returns an error.
-	ContainerStatus(context.Context, *ContainerStatusRequest) (*ContainerStatusResponse, error)
+	ContainerStatus(context.Context, *ContainerIdNameRequest) (*ContainerStatusResponse, error)
 	// Exec prepares a streaming endpoint to execute a command in the container.
 	Exec(context.Context, *ExecRequest) (*ExecResponse, error)
 	mustEmbedUnimplementedContainerServiceServer()
@@ -190,19 +190,19 @@ func (UnimplementedContainerServiceServer) CreateContainer(context.Context, *Cre
 func (UnimplementedContainerServiceServer) AttachContainer(grpc.BidiStreamingServer[AttachContainerMessage, AttachContainerMessage]) error {
 	return status.Error(codes.Unimplemented, "method AttachContainer not implemented")
 }
-func (UnimplementedContainerServiceServer) StartContainer(context.Context, *ContainerIdRequest) (*EmptyMessage, error) {
+func (UnimplementedContainerServiceServer) StartContainer(context.Context, *ContainerIdNameRequest) (*EmptyMessage, error) {
 	return nil, status.Error(codes.Unimplemented, "method StartContainer not implemented")
 }
-func (UnimplementedContainerServiceServer) StopContainer(context.Context, *ContainerIdRequest) (*EmptyMessage, error) {
+func (UnimplementedContainerServiceServer) StopContainer(context.Context, *ContainerIdNameRequest) (*EmptyMessage, error) {
 	return nil, status.Error(codes.Unimplemented, "method StopContainer not implemented")
 }
-func (UnimplementedContainerServiceServer) RemoveContainer(context.Context, *ContainerIdRequest) (*EmptyMessage, error) {
+func (UnimplementedContainerServiceServer) RemoveContainer(context.Context, *ContainerIdNameRequest) (*EmptyMessage, error) {
 	return nil, status.Error(codes.Unimplemented, "method RemoveContainer not implemented")
 }
 func (UnimplementedContainerServiceServer) ListContainers(context.Context, *EmptyMessage) (*ListContainersResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListContainers not implemented")
 }
-func (UnimplementedContainerServiceServer) ContainerStatus(context.Context, *ContainerStatusRequest) (*ContainerStatusResponse, error) {
+func (UnimplementedContainerServiceServer) ContainerStatus(context.Context, *ContainerIdNameRequest) (*ContainerStatusResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ContainerStatus not implemented")
 }
 func (UnimplementedContainerServiceServer) Exec(context.Context, *ExecRequest) (*ExecResponse, error) {
@@ -255,7 +255,7 @@ func _ContainerService_AttachContainer_Handler(srv interface{}, stream grpc.Serv
 type ContainerService_AttachContainerServer = grpc.BidiStreamingServer[AttachContainerMessage, AttachContainerMessage]
 
 func _ContainerService_StartContainer_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ContainerIdRequest)
+	in := new(ContainerIdNameRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -267,13 +267,13 @@ func _ContainerService_StartContainer_Handler(srv interface{}, ctx context.Conte
 		FullMethod: ContainerService_StartContainer_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ContainerServiceServer).StartContainer(ctx, req.(*ContainerIdRequest))
+		return srv.(ContainerServiceServer).StartContainer(ctx, req.(*ContainerIdNameRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _ContainerService_StopContainer_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ContainerIdRequest)
+	in := new(ContainerIdNameRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -285,13 +285,13 @@ func _ContainerService_StopContainer_Handler(srv interface{}, ctx context.Contex
 		FullMethod: ContainerService_StopContainer_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ContainerServiceServer).StopContainer(ctx, req.(*ContainerIdRequest))
+		return srv.(ContainerServiceServer).StopContainer(ctx, req.(*ContainerIdNameRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _ContainerService_RemoveContainer_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ContainerIdRequest)
+	in := new(ContainerIdNameRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -303,7 +303,7 @@ func _ContainerService_RemoveContainer_Handler(srv interface{}, ctx context.Cont
 		FullMethod: ContainerService_RemoveContainer_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ContainerServiceServer).RemoveContainer(ctx, req.(*ContainerIdRequest))
+		return srv.(ContainerServiceServer).RemoveContainer(ctx, req.(*ContainerIdNameRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -327,7 +327,7 @@ func _ContainerService_ListContainers_Handler(srv interface{}, ctx context.Conte
 }
 
 func _ContainerService_ContainerStatus_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ContainerStatusRequest)
+	in := new(ContainerIdNameRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -339,7 +339,7 @@ func _ContainerService_ContainerStatus_Handler(srv interface{}, ctx context.Cont
 		FullMethod: ContainerService_ContainerStatus_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ContainerServiceServer).ContainerStatus(ctx, req.(*ContainerStatusRequest))
+		return srv.(ContainerServiceServer).ContainerStatus(ctx, req.(*ContainerIdNameRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }

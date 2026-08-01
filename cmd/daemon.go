@@ -134,7 +134,7 @@ func (s *ContainerServer) AttachContainer(stream pb.ContainerService_AttachConta
 	}
 }
 
-func (s *ContainerServer) ContainerStatus(ctx context.Context, req *pb.ContainerStatusRequest) (*pb.ContainerStatusResponse, error) {
+func (s *ContainerServer) ContainerStatus(ctx context.Context, req *pb.ContainerIdNameRequest) (*pb.ContainerStatusResponse, error) {
 	var cont_stat *utils.ContState
 
 	// Check both ID and name, whatever comes first
