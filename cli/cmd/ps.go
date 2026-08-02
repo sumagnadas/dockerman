@@ -40,9 +40,18 @@ func psFunc(cmd *cobra.Command, args []string) {
 	for _, cont := range r.GetConts() {
 		// State strings
 		root_state := "Rootless"
-		if cont.Cont.Rooted {
+		if cont.Rooted {
 			root_state = "Rooted\t"
 		}
-		fmt.Printf("%s\t%s\t%s\t%d\t%s\t%s\n", cont.Cont.Id, cont.Cont.Name, cont.Cont.Image, cont.Cont.Nprocs, root_state, cont.State)
+		var state string
+		switch cont.State {
+		case pb.ContainerState_RUNNING:
+			state = "Running"
+		case pb.ContainerState_STOPPED:
+			state = "Stopped"
+		case pb.ContainerState_FROZEN:
+			state = "Frozen"
+		}
+		fmt.Printf("%s\t%s\t%s\t%d\t%s\t%s\n", cont.Id, cont.Name, cont.Image, cont.Nprocs, root_state, state)
 	}
 }

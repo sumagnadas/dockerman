@@ -52,7 +52,7 @@ type ContainerServiceClient interface {
 	ListContainers(ctx context.Context, in *EmptyMessage, opts ...grpc.CallOption) (*ListContainersResponse, error)
 	// ContainerStatus returns status of the container. If the container is not
 	// present, returns an error.
-	ContainerStatus(ctx context.Context, in *ContainerIdNameRequest, opts ...grpc.CallOption) (*ContainerStatusResponse, error)
+	ContainerStatus(ctx context.Context, in *ContainerIdNameRequest, opts ...grpc.CallOption) (*Container, error)
 	// Exec prepares a streaming endpoint to execute a command in the container.
 	Exec(ctx context.Context, in *ExecRequest, opts ...grpc.CallOption) (*ExecResponse, error)
 }
@@ -128,9 +128,9 @@ func (c *containerServiceClient) ListContainers(ctx context.Context, in *EmptyMe
 	return out, nil
 }
 
-func (c *containerServiceClient) ContainerStatus(ctx context.Context, in *ContainerIdNameRequest, opts ...grpc.CallOption) (*ContainerStatusResponse, error) {
+func (c *containerServiceClient) ContainerStatus(ctx context.Context, in *ContainerIdNameRequest, opts ...grpc.CallOption) (*Container, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(ContainerStatusResponse)
+	out := new(Container)
 	err := c.cc.Invoke(ctx, ContainerService_ContainerStatus_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -171,7 +171,7 @@ type ContainerServiceServer interface {
 	ListContainers(context.Context, *EmptyMessage) (*ListContainersResponse, error)
 	// ContainerStatus returns status of the container. If the container is not
 	// present, returns an error.
-	ContainerStatus(context.Context, *ContainerIdNameRequest) (*ContainerStatusResponse, error)
+	ContainerStatus(context.Context, *ContainerIdNameRequest) (*Container, error)
 	// Exec prepares a streaming endpoint to execute a command in the container.
 	Exec(context.Context, *ExecRequest) (*ExecResponse, error)
 	mustEmbedUnimplementedContainerServiceServer()
@@ -202,7 +202,7 @@ func (UnimplementedContainerServiceServer) RemoveContainer(context.Context, *Con
 func (UnimplementedContainerServiceServer) ListContainers(context.Context, *EmptyMessage) (*ListContainersResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListContainers not implemented")
 }
-func (UnimplementedContainerServiceServer) ContainerStatus(context.Context, *ContainerIdNameRequest) (*ContainerStatusResponse, error) {
+func (UnimplementedContainerServiceServer) ContainerStatus(context.Context, *ContainerIdNameRequest) (*Container, error) {
 	return nil, status.Error(codes.Unimplemented, "method ContainerStatus not implemented")
 }
 func (UnimplementedContainerServiceServer) Exec(context.Context, *ExecRequest) (*ExecResponse, error) {

@@ -82,7 +82,7 @@ func (s *ContainerServer) CreateContainer(ctx context.Context, req *pb.CreateCon
 		stdout = stdout_pipe
 		stderr = stderr_pipe
 	}
-	containers = append(containers, utils.ContState{Id: id, Name: name, Image: req.Image, Nprocs: 1, Procs: []int32{int32(cmd.Process.Pid)}, Running: true, Rooted: rooted, Stdin: stdin, Stdout: stdout, Stderr: stderr})
+	containers = append(containers, utils.ContState{Container: &pb.Container{Id: id, Name: name, Image: req.Image, Nprocs: 1, Procs: []int32{int32(cmd.Process.Pid)}, State: pb.ContainerState_RUNNING, Rooted: rooted, Pty: req.GetPty()}, Stdin: stdin, Stdout: stdout, Stderr: stderr})
 
 	return &pb.CreateContainerResponse{Id: name}, nil
 }
@@ -108,6 +108,7 @@ func (s *ContainerServer) AttachContainer(stream pb.ContainerService_AttachConta
 	}
 	if stdin == nil {
 		fmt.Println("No such container.")
+		return
 	}
 
 	output := io.MultiReader(stdout, stderr)
@@ -134,57 +135,27 @@ func (s *ContainerServer) AttachContainer(stream pb.ContainerService_AttachConta
 	}
 }
 
-func (s *ContainerServer) ContainerStatus(ctx context.Context, req *pb.ContainerIdNameRequest) (*pb.ContainerStatusResponse, error) {
-	var cont_stat *utils.ContState
+func (s *ContainerServer) ContainerStatus(ctx context.Context, req *pb.ContainerIdNameRequest) (*pb.Container, error) {
+	var cont_stat *pb.Container
 
 	// Check both ID and name, whatever comes first
 	for _, cont := range containers {
 		if cont.Name == req.GetContainerIdName() || cont.Id == req.GetContainerIdName() {
-			cont_stat = &cont
+			cont_stat = cont.Container
 		}
 	}
 
 	if cont_stat != nil {
-		var state string
-		if cont_stat.Running {
-			state = "Running"
-		} else {
-			state = "Stopped"
-		}
-		return &pb.ContainerStatusResponse{Cont: &pb.Container{
-			Id:     cont_stat.Id,
-			Name:   cont_stat.Name,
-			Image:  cont_stat.Image,
-			Procs:  cont_stat.Procs,
-			Nprocs: cont_stat.Nprocs,
-			Rooted: cont_stat.Rooted,
-		},
-			State: state,
-		}, nil
+		return cont_stat, nil
 	} else {
-		return &pb.ContainerStatusResponse{}, errors.New("Couldn't find container.")
+		return &pb.Container{}, errors.New("Couldn't find container.")
 	}
 }
 
 func (s *ContainerServer) ListContainers(ctx context.Context, req *pb.EmptyMessage) (*pb.ListContainersResponse, error) {
-	var cont_list []*pb.ContainerStatusResponse
+	var cont_list []*pb.Container
 	for _, cont := range containers {
-		var state string
-		if cont.Running {
-			state = "Running"
-		} else {
-			state = "Stopped"
-		}
-		cont_list = append(cont_list, &pb.ContainerStatusResponse{Cont: &pb.Container{
-			Id:     cont.Id,
-			Name:   cont.Name,
-			Image:  cont.Image,
-			Procs:  cont.Procs,
-			Nprocs: cont.Nprocs,
-			Rooted: cont.Rooted,
-		},
-			State: state,
-		})
+		cont_list = append(cont_list, cont.Container)
 	}
 	return &pb.ListContainersResponse{Conts: cont_list}, nil
 }

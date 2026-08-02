@@ -41,15 +41,25 @@ func infoFunc(cmd *cobra.Command, args []string) {
 	}
 
 	root_state := "Rootless"
-	if r.Cont.Rooted {
+	if r.Rooted {
 		root_state = "Rooted"
 	}
 
-	fmt.Println("ID:", r.Cont.Id)
-	fmt.Println("Name:", r.Cont.Name)
-	fmt.Println("Status:", r.State)
-	fmt.Println("Image:", r.Cont.Image)
-	fmt.Println("Nprocs:", r.Cont.Nprocs)
-	fmt.Println("Procs:", r.Cont.Procs)
+	var state string
+	switch r.State {
+	case pb.ContainerState_RUNNING:
+		state = "Running"
+	case pb.ContainerState_STOPPED:
+		state = "Stopped"
+	case pb.ContainerState_FROZEN:
+		state = "Frozen"
+	}
+
+	fmt.Println("ID:", r.Id)
+	fmt.Println("Name:", r.Name)
+	fmt.Println("State:", state)
+	fmt.Println("Image:", r.Image)
+	fmt.Println("Nprocs:", r.Nprocs)
+	fmt.Println("Procs:", r.Procs)
 	fmt.Println("Rooted:", root_state)
 }
