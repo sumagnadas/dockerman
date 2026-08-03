@@ -310,6 +310,23 @@ func (s *ContainerServer) Exec(stream pb.ContainerService_ExecServer) (err error
 	return nil
 }
 
+func (s *ContainerServer) RemoveContainer(ctx context.Context, req *pb.ContainerIdNameRequest) (*pb.EmptyMessage, error) {
+	var cont_req *utils.ContState
+	for _, cont := range containers {
+		if cont.Id == req.ContainerIdName || cont.Name == req.ContainerIdName {
+			cont_req = &cont
+			break
+		}
+	}
+	if cont_req == nil {
+		return &pb.EmptyMessage{}, errors.New("No container with this ID or name.")
+	}
+
+	cgroup_kill_file := filepath.Join("/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice/dockman", cont_req.Name, "cgroup.kill")
+	os.WriteFile(cgroup_kill_file, []byte{byte('1')}, 0755)
+	return &pb.EmptyMessage{}, nil
+}
+
 var daemon_cmd = &cobra.Command{
 	Use:   "daemon",
 	Short: "Launch a daemon to manage containers.",
