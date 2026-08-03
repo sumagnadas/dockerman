@@ -28,7 +28,7 @@ func init() {
 	root_cmd.AddCommand(run_cmd)
 	run_cmd.Flags().BoolVarP(&user, "user", "u", false, "Start an unprivileged container, mapping the current UID")
 	run_cmd.Flags().BoolVarP(&pty_run, "tty", "t", false, "Allocate a pseudo-TTY")
-	exec_cmd.Flags().BoolVarP(&interactive_run, "interactive", "i", false, "Keep STDIN open if not attached")
+	run_cmd.Flags().BoolVarP(&interactive_run, "interactive", "i", false, "Keep STDIN open if not attached")
 	run_cmd.Flags().StringVar(&name, "name", "", "Name of the container")
 }
 

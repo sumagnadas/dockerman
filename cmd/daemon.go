@@ -145,7 +145,7 @@ func (s *ContainerServer) AttachContainer(stream pb.ContainerService_AttachConta
 	var stdin io.Writer
 	var stdout, stderr io.Reader
 	for _, cont := range containers {
-		if cont.Name == id {
+		if cont.Name == id || cont.Id == id {
 			stdin = cont.Stdin
 			stdout = cont.Stdout
 			stderr = cont.Stderr
