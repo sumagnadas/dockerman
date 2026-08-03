@@ -54,7 +54,7 @@ type ContainerServiceClient interface {
 	// present, returns an error.
 	ContainerStatus(ctx context.Context, in *ContainerIdNameRequest, opts ...grpc.CallOption) (*Container, error)
 	// Exec prepares a streaming endpoint to execute a command in the container.
-	Exec(ctx context.Context, in *ExecRequest, opts ...grpc.CallOption) (*ExecResponse, error)
+	Exec(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[ExecContainerMessage, ExecContainerMessage], error)
 }
 
 type containerServiceClient struct {
@@ -138,15 +138,18 @@ func (c *containerServiceClient) ContainerStatus(ctx context.Context, in *Contai
 	return out, nil
 }
 
-func (c *containerServiceClient) Exec(ctx context.Context, in *ExecRequest, opts ...grpc.CallOption) (*ExecResponse, error) {
+func (c *containerServiceClient) Exec(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[ExecContainerMessage, ExecContainerMessage], error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(ExecResponse)
-	err := c.cc.Invoke(ctx, ContainerService_Exec_FullMethodName, in, out, cOpts...)
+	stream, err := c.cc.NewStream(ctx, &ContainerService_ServiceDesc.Streams[1], ContainerService_Exec_FullMethodName, cOpts...)
 	if err != nil {
 		return nil, err
 	}
-	return out, nil
+	x := &grpc.GenericClientStream[ExecContainerMessage, ExecContainerMessage]{ClientStream: stream}
+	return x, nil
 }
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type ContainerService_ExecClient = grpc.BidiStreamingClient[ExecContainerMessage, ExecContainerMessage]
 
 // ContainerServiceServer is the server API for ContainerService service.
 // All implementations must embed UnimplementedContainerServiceServer
@@ -173,7 +176,7 @@ type ContainerServiceServer interface {
 	// present, returns an error.
 	ContainerStatus(context.Context, *ContainerIdNameRequest) (*Container, error)
 	// Exec prepares a streaming endpoint to execute a command in the container.
-	Exec(context.Context, *ExecRequest) (*ExecResponse, error)
+	Exec(grpc.BidiStreamingServer[ExecContainerMessage, ExecContainerMessage]) error
 	mustEmbedUnimplementedContainerServiceServer()
 }
 
@@ -205,8 +208,8 @@ func (UnimplementedContainerServiceServer) ListContainers(context.Context, *Empt
 func (UnimplementedContainerServiceServer) ContainerStatus(context.Context, *ContainerIdNameRequest) (*Container, error) {
 	return nil, status.Error(codes.Unimplemented, "method ContainerStatus not implemented")
 }
-func (UnimplementedContainerServiceServer) Exec(context.Context, *ExecRequest) (*ExecResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method Exec not implemented")
+func (UnimplementedContainerServiceServer) Exec(grpc.BidiStreamingServer[ExecContainerMessage, ExecContainerMessage]) error {
+	return status.Error(codes.Unimplemented, "method Exec not implemented")
 }
 func (UnimplementedContainerServiceServer) mustEmbedUnimplementedContainerServiceServer() {}
 func (UnimplementedContainerServiceServer) testEmbeddedByValue()                          {}
@@ -344,23 +347,12 @@ func _ContainerService_ContainerStatus_Handler(srv interface{}, ctx context.Cont
 	return interceptor(ctx, in, info, handler)
 }
 
-func _ContainerService_Exec_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ExecRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(ContainerServiceServer).Exec(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: ContainerService_Exec_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ContainerServiceServer).Exec(ctx, req.(*ExecRequest))
-	}
-	return interceptor(ctx, in, info, handler)
+func _ContainerService_Exec_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(ContainerServiceServer).Exec(&grpc.GenericServerStream[ExecContainerMessage, ExecContainerMessage]{ServerStream: stream})
 }
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type ContainerService_ExecServer = grpc.BidiStreamingServer[ExecContainerMessage, ExecContainerMessage]
 
 // ContainerService_ServiceDesc is the grpc.ServiceDesc for ContainerService service.
 // It's only intended for direct use with grpc.RegisterService,
@@ -393,15 +385,17 @@ var ContainerService_ServiceDesc = grpc.ServiceDesc{
 			MethodName: "ContainerStatus",
 			Handler:    _ContainerService_ContainerStatus_Handler,
 		},
-		{
-			MethodName: "Exec",
-			Handler:    _ContainerService_Exec_Handler,
-		},
 	},
 	Streams: []grpc.StreamDesc{
 		{
 			StreamName:    "AttachContainer",
 			Handler:       _ContainerService_AttachContainer_Handler,
+			ServerStreams: true,
+			ClientStreams: true,
+		},
+		{
+			StreamName:    "Exec",
+			Handler:       _ContainerService_Exec_Handler,
 			ServerStreams: true,
 			ClientStreams: true,
 		},

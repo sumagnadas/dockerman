@@ -40,7 +40,7 @@ service ContainerService {
     // // rpc ReopenContainerLog(ReopenContainerLogRequest) returns (ReopenContainerLogResponse) {}
     
     // Exec prepares a streaming endpoint to execute a command in the container.
-    rpc Exec(ExecRequest) returns (ExecResponse) {}
+    rpc Exec(stream ExecContainerMessage) returns (stream ExecContainerMessage) {}
 }
 
 
@@ -81,7 +81,6 @@ message Container {
     string          id     = 1;
     string          name   = 2;
     string          image  = 3;
-    int32           nprocs = 4;
     repeated int32  procs  = 5;
     bool            rooted = 6;
     string          cmd    = 7;
@@ -100,8 +99,21 @@ message ExecResponse {
 
 message AttachContainerMessage {
     oneof payload {
-        bytes stdin_data  = 1;
-        bytes stdout_data = 2;
-        string container_id = 3;
+        bytes           stdin_data   = 1;
+        bytes           stdout_data  = 2;
+        string          container_id = 3;
     }
+}
+message ExecContainerMessage {
+    oneof payload {
+        bytes           stdin_data   = 1;
+        bytes           stdout_data  = 2;
+        ExecProcess     proc         = 3;
+    }
+}
+message ExecProcess {
+    string          container_id = 1;
+    repeated string cmdline      = 2;
+    bool            interactive  = 3;
+    bool            pty          = 4;
 }

@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"dock/utils"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -15,7 +16,7 @@ import (
 var run_cmd = &cobra.Command{
 	Use:   "run image [flags] -- <command>",
 	Short: "Run a container runtime with image and command (attaches the stdin, stdout and stderr of the command to shell)",
-	Run:   runFunc,
+	RunE:  runFunc,
 }
 var user int
 var name string
@@ -28,11 +29,11 @@ func init() {
 
 // docker         run image <cmd>
 // go run main.go run image <cmd>
-func runFunc(c *cobra.Command, args []string) {
+func runFunc(c *cobra.Command, args []string) error {
 	if len(args) < 2 {
 		fmt.Println("Not enough arguments.")
 		fmt.Println(c.Use)
-		return
+		return errors.New("Not enough arguments")
 	}
 
 	// divide the commandline arguments
@@ -50,11 +51,9 @@ func runFunc(c *cobra.Command, args []string) {
 	if _, err_stat := os.Stat(img_path); err_stat != nil {
 		fmt.Println(err_stat)
 		fmt.Println("Image/root filesystem not found or inaccessible at ", img_path)
-		return
-	}
+		return errors.New("Image not found")
 
-	// debug
-	fmt.Printf("Running with image '%s' and command %v as %d. :)\n", image, cmdline, os.Getpid())
+	}
 
 	if os.Getpid() == 1 {
 		// We are officially inside the container...
@@ -73,7 +72,6 @@ func runFunc(c *cobra.Command, args []string) {
 		unix.Sethostname([]byte(hname))
 
 		// set root and mount proc
-		fmt.Println("Changing root to ", img_path)
 		unix.Mount(img_path, img_path, "none", unix.MS_BIND, "")
 
 		// pivot root
@@ -119,11 +117,11 @@ func runFunc(c *cobra.Command, args []string) {
 
 			if err_cgroup != nil {
 				fmt.Println("Cgroup err", err_cgroup)
-				panic(err_cgroup)
+				return err_cgroup
 			}
 			cg_fd, err_fd := unix.Open(cgroup_dir, unix.O_DIRECTORY|unix.O_CLOEXEC, 0)
 			if err_fd != nil {
-				panic(err_fd)
+				return err_fd
 			}
 			defer unix.Close(cg_fd)
 
@@ -138,9 +136,9 @@ func runFunc(c *cobra.Command, args []string) {
 			// start the container runtime
 			err_run := cmd.Start()
 			if err_run != nil {
-				panic(err_run)
+				return err_run
 			}
-
+			fmt.Println(cmd.Process.Pid)
 			defer cmd.Wait()
 		} else if user == os.Geteuid() || os.Geteuid() == 0 && user != 0 {
 			// set up the user namespace for container as the host user rootless
@@ -173,10 +171,11 @@ func runFunc(c *cobra.Command, args []string) {
 			// start the container runtime
 			err_run := cmd.Run()
 			if err_run != nil {
-				panic(err_run)
+				return err_run
 			}
 		} else {
 			fmt.Println("You need root to create rooted container. To create a rootless container please use the --user flag.")
 		}
 	}
+	return nil
 }

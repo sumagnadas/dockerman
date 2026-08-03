@@ -345,7 +345,6 @@ type Container struct {
 	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
 	Image         string                 `protobuf:"bytes,3,opt,name=image,proto3" json:"image,omitempty"`
-	Nprocs        int32                  `protobuf:"varint,4,opt,name=nprocs,proto3" json:"nprocs,omitempty"`
 	Procs         []int32                `protobuf:"varint,5,rep,packed,name=procs,proto3" json:"procs,omitempty"`
 	Rooted        bool                   `protobuf:"varint,6,opt,name=rooted,proto3" json:"rooted,omitempty"`
 	Cmd           string                 `protobuf:"bytes,7,opt,name=cmd,proto3" json:"cmd,omitempty"`
@@ -405,13 +404,6 @@ func (x *Container) GetImage() string {
 		return x.Image
 	}
 	return ""
-}
-
-func (x *Container) GetNprocs() int32 {
-	if x != nil {
-		return x.Nprocs
-	}
-	return 0
 }
 
 func (x *Container) GetProcs() []int32 {
@@ -642,6 +634,172 @@ func (*AttachContainerMessage_StdoutData) isAttachContainerMessage_Payload() {}
 
 func (*AttachContainerMessage_ContainerId) isAttachContainerMessage_Payload() {}
 
+type ExecContainerMessage struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Types that are valid to be assigned to Payload:
+	//
+	//	*ExecContainerMessage_StdinData
+	//	*ExecContainerMessage_StdoutData
+	//	*ExecContainerMessage_Proc
+	Payload       isExecContainerMessage_Payload `protobuf_oneof:"payload"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ExecContainerMessage) Reset() {
+	*x = ExecContainerMessage{}
+	mi := &file_service_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ExecContainerMessage) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ExecContainerMessage) ProtoMessage() {}
+
+func (x *ExecContainerMessage) ProtoReflect() protoreflect.Message {
+	mi := &file_service_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ExecContainerMessage.ProtoReflect.Descriptor instead.
+func (*ExecContainerMessage) Descriptor() ([]byte, []int) {
+	return file_service_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *ExecContainerMessage) GetPayload() isExecContainerMessage_Payload {
+	if x != nil {
+		return x.Payload
+	}
+	return nil
+}
+
+func (x *ExecContainerMessage) GetStdinData() []byte {
+	if x != nil {
+		if x, ok := x.Payload.(*ExecContainerMessage_StdinData); ok {
+			return x.StdinData
+		}
+	}
+	return nil
+}
+
+func (x *ExecContainerMessage) GetStdoutData() []byte {
+	if x != nil {
+		if x, ok := x.Payload.(*ExecContainerMessage_StdoutData); ok {
+			return x.StdoutData
+		}
+	}
+	return nil
+}
+
+func (x *ExecContainerMessage) GetProc() *ExecProcess {
+	if x != nil {
+		if x, ok := x.Payload.(*ExecContainerMessage_Proc); ok {
+			return x.Proc
+		}
+	}
+	return nil
+}
+
+type isExecContainerMessage_Payload interface {
+	isExecContainerMessage_Payload()
+}
+
+type ExecContainerMessage_StdinData struct {
+	StdinData []byte `protobuf:"bytes,1,opt,name=stdin_data,json=stdinData,proto3,oneof"`
+}
+
+type ExecContainerMessage_StdoutData struct {
+	StdoutData []byte `protobuf:"bytes,2,opt,name=stdout_data,json=stdoutData,proto3,oneof"`
+}
+
+type ExecContainerMessage_Proc struct {
+	Proc *ExecProcess `protobuf:"bytes,3,opt,name=proc,proto3,oneof"`
+}
+
+func (*ExecContainerMessage_StdinData) isExecContainerMessage_Payload() {}
+
+func (*ExecContainerMessage_StdoutData) isExecContainerMessage_Payload() {}
+
+func (*ExecContainerMessage_Proc) isExecContainerMessage_Payload() {}
+
+type ExecProcess struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ContainerId   string                 `protobuf:"bytes,1,opt,name=container_id,json=containerId,proto3" json:"container_id,omitempty"`
+	Cmdline       []string               `protobuf:"bytes,2,rep,name=cmdline,proto3" json:"cmdline,omitempty"`
+	Interactive   bool                   `protobuf:"varint,3,opt,name=interactive,proto3" json:"interactive,omitempty"`
+	Pty           bool                   `protobuf:"varint,4,opt,name=pty,proto3" json:"pty,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ExecProcess) Reset() {
+	*x = ExecProcess{}
+	mi := &file_service_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ExecProcess) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ExecProcess) ProtoMessage() {}
+
+func (x *ExecProcess) ProtoReflect() protoreflect.Message {
+	mi := &file_service_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ExecProcess.ProtoReflect.Descriptor instead.
+func (*ExecProcess) Descriptor() ([]byte, []int) {
+	return file_service_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *ExecProcess) GetContainerId() string {
+	if x != nil {
+		return x.ContainerId
+	}
+	return ""
+}
+
+func (x *ExecProcess) GetCmdline() []string {
+	if x != nil {
+		return x.Cmdline
+	}
+	return nil
+}
+
+func (x *ExecProcess) GetInteractive() bool {
+	if x != nil {
+		return x.Interactive
+	}
+	return false
+}
+
+func (x *ExecProcess) GetPty() bool {
+	if x != nil {
+		return x.Pty
+	}
+	return false
+}
+
 var File_service_proto protoreflect.FileDescriptor
 
 const file_service_proto_rawDesc = "" +
@@ -664,12 +822,11 @@ const file_service_proto_rawDesc = "" +
 	"\x04args\x18\x03 \x03(\tR\x04args\"\x0e\n" +
 	"\fEmptyMessage\")\n" +
 	"\x17CreateContainerResponse\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\"\xf4\x01\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\"\xdc\x01\n" +
 	"\tContainer\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x14\n" +
-	"\x05image\x18\x03 \x01(\tR\x05image\x12\x16\n" +
-	"\x06nprocs\x18\x04 \x01(\x05R\x06nprocs\x12\x14\n" +
+	"\x05image\x18\x03 \x01(\tR\x05image\x12\x14\n" +
 	"\x05procs\x18\x05 \x03(\x05R\x05procs\x12\x16\n" +
 	"\x06rooted\x18\x06 \x01(\bR\x06rooted\x12\x10\n" +
 	"\x03cmd\x18\a \x01(\tR\x03cmd\x12\x12\n" +
@@ -687,12 +844,24 @@ const file_service_proto_rawDesc = "" +
 	"\vstdout_data\x18\x02 \x01(\fH\x00R\n" +
 	"stdoutData\x12#\n" +
 	"\fcontainer_id\x18\x03 \x01(\tH\x00R\vcontainerIdB\t\n" +
-	"\apayload*6\n" +
+	"\apayload\"\x93\x01\n" +
+	"\x14ExecContainerMessage\x12\x1f\n" +
+	"\n" +
+	"stdin_data\x18\x01 \x01(\fH\x00R\tstdinData\x12!\n" +
+	"\vstdout_data\x18\x02 \x01(\fH\x00R\n" +
+	"stdoutData\x12,\n" +
+	"\x04proc\x18\x03 \x01(\v2\x16.dockerman.ExecProcessH\x00R\x04procB\t\n" +
+	"\apayload\"~\n" +
+	"\vExecProcess\x12!\n" +
+	"\fcontainer_id\x18\x01 \x01(\tR\vcontainerId\x12\x18\n" +
+	"\acmdline\x18\x02 \x03(\tR\acmdline\x12 \n" +
+	"\vinteractive\x18\x03 \x01(\bR\vinteractive\x12\x10\n" +
+	"\x03pty\x18\x04 \x01(\bR\x03pty*6\n" +
 	"\x0eContainerState\x12\v\n" +
 	"\aRUNNING\x10\x00\x12\v\n" +
 	"\aSTOPPED\x10\x01\x12\n" +
 	"\n" +
-	"\x06FROZEN\x10\x022\x96\x05\n" +
+	"\x06FROZEN\x10\x022\xab\x05\n" +
 	"\x10ContainerService\x12Z\n" +
 	"\x0fCreateContainer\x12!.dockerman.CreateContainerRequest\x1a\".dockerman.CreateContainerResponse\"\x00\x12]\n" +
 	"\x0fAttachContainer\x12!.dockerman.AttachContainerMessage\x1a!.dockerman.AttachContainerMessage\"\x00(\x010\x01\x12N\n" +
@@ -700,8 +869,8 @@ const file_service_proto_rawDesc = "" +
 	"\rStopContainer\x12!.dockerman.ContainerIdNameRequest\x1a\x17.dockerman.EmptyMessage\"\x00\x12O\n" +
 	"\x0fRemoveContainer\x12!.dockerman.ContainerIdNameRequest\x1a\x17.dockerman.EmptyMessage\"\x00\x12N\n" +
 	"\x0eListContainers\x12\x17.dockerman.EmptyMessage\x1a!.dockerman.ListContainersResponse\"\x00\x12L\n" +
-	"\x0fContainerStatus\x12!.dockerman.ContainerIdNameRequest\x1a\x14.dockerman.Container\"\x00\x129\n" +
-	"\x04Exec\x12\x16.dockerman.ExecRequest\x1a\x17.dockerman.ExecResponse\"\x00B\x0eZ\fdock/serviceb\x06proto3"
+	"\x0fContainerStatus\x12!.dockerman.ContainerIdNameRequest\x1a\x14.dockerman.Container\"\x00\x12N\n" +
+	"\x04Exec\x12\x1f.dockerman.ExecContainerMessage\x1a\x1f.dockerman.ExecContainerMessage\"\x00(\x010\x01B\x0eZ\fdock/serviceb\x06proto3"
 
 var (
 	file_service_proto_rawDescOnce sync.Once
@@ -716,7 +885,7 @@ func file_service_proto_rawDescGZIP() []byte {
 }
 
 var file_service_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_service_proto_msgTypes = make([]protoimpl.MessageInfo, 9)
+var file_service_proto_msgTypes = make([]protoimpl.MessageInfo, 11)
 var file_service_proto_goTypes = []any{
 	(ContainerState)(0),             // 0: dockerman.ContainerState
 	(*CreateContainerRequest)(nil),  // 1: dockerman.CreateContainerRequest
@@ -728,31 +897,34 @@ var file_service_proto_goTypes = []any{
 	(*ListContainersResponse)(nil),  // 7: dockerman.ListContainersResponse
 	(*ExecResponse)(nil),            // 8: dockerman.ExecResponse
 	(*AttachContainerMessage)(nil),  // 9: dockerman.AttachContainerMessage
+	(*ExecContainerMessage)(nil),    // 10: dockerman.ExecContainerMessage
+	(*ExecProcess)(nil),             // 11: dockerman.ExecProcess
 }
 var file_service_proto_depIdxs = []int32{
 	0,  // 0: dockerman.Container.state:type_name -> dockerman.ContainerState
 	6,  // 1: dockerman.ListContainersResponse.conts:type_name -> dockerman.Container
-	1,  // 2: dockerman.ContainerService.CreateContainer:input_type -> dockerman.CreateContainerRequest
-	9,  // 3: dockerman.ContainerService.AttachContainer:input_type -> dockerman.AttachContainerMessage
-	2,  // 4: dockerman.ContainerService.StartContainer:input_type -> dockerman.ContainerIdNameRequest
-	2,  // 5: dockerman.ContainerService.StopContainer:input_type -> dockerman.ContainerIdNameRequest
-	2,  // 6: dockerman.ContainerService.RemoveContainer:input_type -> dockerman.ContainerIdNameRequest
-	4,  // 7: dockerman.ContainerService.ListContainers:input_type -> dockerman.EmptyMessage
-	2,  // 8: dockerman.ContainerService.ContainerStatus:input_type -> dockerman.ContainerIdNameRequest
-	3,  // 9: dockerman.ContainerService.Exec:input_type -> dockerman.ExecRequest
-	5,  // 10: dockerman.ContainerService.CreateContainer:output_type -> dockerman.CreateContainerResponse
-	9,  // 11: dockerman.ContainerService.AttachContainer:output_type -> dockerman.AttachContainerMessage
-	4,  // 12: dockerman.ContainerService.StartContainer:output_type -> dockerman.EmptyMessage
-	4,  // 13: dockerman.ContainerService.StopContainer:output_type -> dockerman.EmptyMessage
-	4,  // 14: dockerman.ContainerService.RemoveContainer:output_type -> dockerman.EmptyMessage
-	7,  // 15: dockerman.ContainerService.ListContainers:output_type -> dockerman.ListContainersResponse
-	6,  // 16: dockerman.ContainerService.ContainerStatus:output_type -> dockerman.Container
-	8,  // 17: dockerman.ContainerService.Exec:output_type -> dockerman.ExecResponse
-	10, // [10:18] is the sub-list for method output_type
-	2,  // [2:10] is the sub-list for method input_type
-	2,  // [2:2] is the sub-list for extension type_name
-	2,  // [2:2] is the sub-list for extension extendee
-	0,  // [0:2] is the sub-list for field type_name
+	11, // 2: dockerman.ExecContainerMessage.proc:type_name -> dockerman.ExecProcess
+	1,  // 3: dockerman.ContainerService.CreateContainer:input_type -> dockerman.CreateContainerRequest
+	9,  // 4: dockerman.ContainerService.AttachContainer:input_type -> dockerman.AttachContainerMessage
+	2,  // 5: dockerman.ContainerService.StartContainer:input_type -> dockerman.ContainerIdNameRequest
+	2,  // 6: dockerman.ContainerService.StopContainer:input_type -> dockerman.ContainerIdNameRequest
+	2,  // 7: dockerman.ContainerService.RemoveContainer:input_type -> dockerman.ContainerIdNameRequest
+	4,  // 8: dockerman.ContainerService.ListContainers:input_type -> dockerman.EmptyMessage
+	2,  // 9: dockerman.ContainerService.ContainerStatus:input_type -> dockerman.ContainerIdNameRequest
+	10, // 10: dockerman.ContainerService.Exec:input_type -> dockerman.ExecContainerMessage
+	5,  // 11: dockerman.ContainerService.CreateContainer:output_type -> dockerman.CreateContainerResponse
+	9,  // 12: dockerman.ContainerService.AttachContainer:output_type -> dockerman.AttachContainerMessage
+	4,  // 13: dockerman.ContainerService.StartContainer:output_type -> dockerman.EmptyMessage
+	4,  // 14: dockerman.ContainerService.StopContainer:output_type -> dockerman.EmptyMessage
+	4,  // 15: dockerman.ContainerService.RemoveContainer:output_type -> dockerman.EmptyMessage
+	7,  // 16: dockerman.ContainerService.ListContainers:output_type -> dockerman.ListContainersResponse
+	6,  // 17: dockerman.ContainerService.ContainerStatus:output_type -> dockerman.Container
+	10, // 18: dockerman.ContainerService.Exec:output_type -> dockerman.ExecContainerMessage
+	11, // [11:19] is the sub-list for method output_type
+	3,  // [3:11] is the sub-list for method input_type
+	3,  // [3:3] is the sub-list for extension type_name
+	3,  // [3:3] is the sub-list for extension extendee
+	0,  // [0:3] is the sub-list for field type_name
 }
 
 func init() { file_service_proto_init() }
@@ -766,13 +938,18 @@ func file_service_proto_init() {
 		(*AttachContainerMessage_StdoutData)(nil),
 		(*AttachContainerMessage_ContainerId)(nil),
 	}
+	file_service_proto_msgTypes[9].OneofWrappers = []any{
+		(*ExecContainerMessage_StdinData)(nil),
+		(*ExecContainerMessage_StdoutData)(nil),
+		(*ExecContainerMessage_Proc)(nil),
+	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_service_proto_rawDesc), len(file_service_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   9,
+			NumMessages:   11,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

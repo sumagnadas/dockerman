@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"bufio"
 	"context"
 	"dock/utils"
 	"errors"
@@ -24,6 +25,37 @@ var containers = []utils.ContState{}
 
 type ContainerServer struct {
 	pb.UnimplementedContainerServiceServer
+}
+
+func readLine(r io.Reader) (string, error) {
+	scanner := bufio.NewScanner(r)
+
+	var line string
+	if scanner.Scan() {
+		line = scanner.Text()
+	}
+
+	if err := scanner.Err(); err != nil {
+		return "", err
+	}
+	return line, nil
+}
+func removePid(container *utils.ContState, pid int) {
+	for i, cont_pid := range container.Procs {
+		if cont_pid == int32(pid) {
+			container.Procs = append(container.Procs[:i], container.Procs[i+1:]...)
+			break
+		}
+	}
+
+	if len(container.Procs) == 0 {
+		for i, cont_v := range containers {
+			if cont_v == *container {
+				containers = append(containers[:i], containers[i+1:]...)
+				break
+			}
+		}
+	}
 }
 
 func (s *ContainerServer) CreateContainer(ctx context.Context, req *pb.CreateContainerRequest) (*pb.CreateContainerResponse, error) {
@@ -82,8 +114,21 @@ func (s *ContainerServer) CreateContainer(ctx context.Context, req *pb.CreateCon
 		stdout = stdout_pipe
 		stderr = stderr_pipe
 	}
-	containers = append(containers, utils.ContState{Container: &pb.Container{Id: id, Name: name, Image: req.Image, Nprocs: 1, Procs: []int32{int32(cmd.Process.Pid)}, State: pb.ContainerState_RUNNING, Rooted: rooted, Pty: req.GetPty()}, Stdin: stdin, Stdout: stdout, Stderr: stderr})
-
+	if cmd.ProcessState.ExitCode() == 1 {
+		return &pb.CreateContainerResponse{Id: "-1"}, errors.New("something happened.")
+	}
+	// if its running, then its running on hopes and dreams
+	pid, err_pid := readLine(stdout)
+	if err_pid != nil {
+		return &pb.CreateContainerResponse{Id: "-1"}, err_pid
+	}
+	pid_int, _ := strconv.Atoi(pid)
+	cont := utils.ContState{Container: &pb.Container{Id: id, Name: name, Image: req.Image, Procs: []int32{int32(pid_int)}, State: pb.ContainerState_RUNNING, Rooted: rooted, Pty: req.GetPty()}, Stdin: stdin, Stdout: stdout, Stderr: stderr}
+	containers = append(containers, cont)
+	go func() {
+		cmd.Wait()
+		removePid(&cont, pid_int)
+	}()
 	return &pb.CreateContainerResponse{Id: name}, nil
 }
 
@@ -158,6 +203,97 @@ func (s *ContainerServer) ListContainers(ctx context.Context, req *pb.EmptyMessa
 		cont_list = append(cont_list, cont.Container)
 	}
 	return &pb.ListContainersResponse{Conts: cont_list}, nil
+}
+
+func (s *ContainerServer) Exec(stream pb.ContainerService_ExecServer) (err error) {
+	msg, err_stream := stream.Recv()
+	if err_stream != nil {
+		return err_stream
+	}
+	proc := msg.GetProc()
+	if proc == nil {
+		return errors.New("No container id sent.")
+	}
+
+	var cont_req *utils.ContState
+	for _, cont := range containers {
+		if cont.Id == proc.ContainerId || cont.Name == proc.ContainerId {
+			cont_req = &cont
+			break
+		}
+	}
+	if cont_req == nil {
+		return errors.New("No container with this ID or name.")
+	}
+
+	target_pid := cont_req.Procs[0]
+	ns_args := []string{"-t", strconv.Itoa(int(target_pid)), "--all"}
+	ns_args = append(ns_args, proc.Cmdline...)
+	nscmd := exec.Command("nsenter", ns_args...)
+
+	var stdin io.Writer
+	var stdout, stderr io.Reader
+
+	if proc.GetPty() {
+		f, err := pty.Start(nscmd)
+		if err != nil {
+			return err
+		}
+		stdin = f
+		stdout = f
+		stderr = f
+	} else {
+		stdin_pipe, err_stdin := nscmd.StdinPipe()
+		stdout_pipe, err_stdout := nscmd.StdoutPipe()
+		stderr_pipe, err_stderr := nscmd.StderrPipe()
+
+		err_run := nscmd.Start()
+		if err_run != nil {
+			panic(err_run)
+		}
+		if err_stdin != nil || err_stdout != nil || err_stderr != nil {
+			nscmd.Process.Signal(unix.SIGTERM)
+			fmt.Println(err_stdin)
+			fmt.Println(err_stdout)
+			fmt.Println(err_stderr)
+			return errors.New("Can't connect pipe.")
+		}
+
+		stdin = stdin_pipe
+		stdout = stdout_pipe
+		stderr = stderr_pipe
+	}
+	cont_req.Procs = append(cont_req.Procs, int32(nscmd.Process.Pid))
+	go func() {
+		nscmd.Wait()
+		removePid(cont_req, nscmd.Process.Pid)
+	}()
+
+	if proc.GetInteractive() {
+		output := io.MultiReader(stdout, stderr)
+		// input sync
+		go func() {
+			for {
+
+				msg, err := stream.Recv()
+				if err != nil {
+					return
+				}
+				stdin.Write(msg.GetStdinData())
+			}
+		}()
+
+		// output sync
+		buf := make([]byte, 4096)
+		for {
+			n, err_read := output.Read(buf)
+			if err_read != nil {
+				return err_read
+			}
+			stream.Send(&pb.ExecContainerMessage{Payload: &pb.ExecContainerMessage_StdoutData{buf[:n]}})
+		}
+	}
+	return nil
 }
 
 var daemon_cmd = &cobra.Command{

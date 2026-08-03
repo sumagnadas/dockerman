@@ -16,7 +16,7 @@ import (
 )
 
 var attach_cmd = &cobra.Command{
-	Use:   "attach [flags] -- <command>",
+	Use:   "attach <container> [flags] -- <command>",
 	Short: "Run a container runtime with image and command (attaches the stdin, stdout and stderr of the command to shell)",
 	Run:   attachFunc,
 }

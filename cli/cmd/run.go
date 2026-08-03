@@ -16,22 +16,28 @@ import (
 )
 
 var run_cmd = &cobra.Command{
-	Use:   "run [flags] -- <command>",
+	Use:   "run <image> [flags] -- <command>",
 	Short: "Run a container runtime with image and command (attaches the stdin, stdout and stderr of the command to shell)",
 	Run:   runFunc,
 }
 
-var user, pty bool
+var user, pty_run, interactive_run bool
 var name string
 
 func init() {
 	root_cmd.AddCommand(run_cmd)
 	run_cmd.Flags().BoolVarP(&user, "user", "u", false, "Start an unprivileged container, mapping the current UID")
-	run_cmd.Flags().BoolVarP(&pty, "tty", "t", false, "Allocate a pseudo-TTY")
+	run_cmd.Flags().BoolVarP(&pty_run, "tty", "t", false, "Allocate a pseudo-TTY")
+	exec_cmd.Flags().BoolVarP(&interactive_run, "interactive", "i", false, "Keep STDIN open if not attached")
 	run_cmd.Flags().StringVar(&name, "name", "", "Name of the container")
 }
 
 func runFunc(cmd *cobra.Command, args []string) {
+	if len(args) < 2 {
+		fmt.Println("Not enough arguments.")
+		fmt.Println(cmd.Use)
+		return
+	}
 	// Set up a connection to the server.
 	conn, err := grpc.NewClient(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
@@ -39,7 +45,7 @@ func runFunc(cmd *cobra.Command, args []string) {
 	}
 	defer conn.Close()
 	c := pb.NewContainerServiceClient(conn)
-	cont_request := pb.CreateContainerRequest{Name: &name, Image: args[0], Command: args[1], Args: args[2:], Pty: pty}
+	cont_request := pb.CreateContainerRequest{Name: &name, Image: args[0], Command: args[1], Args: args[2:], Pty: pty_run}
 
 	// if unprivileged container required
 	if user {
@@ -53,46 +59,48 @@ func runFunc(cmd *cobra.Command, args []string) {
 		log.Fatalf("could not create container: %v", err)
 	}
 	log.Printf("Id: %s", r.GetId())
+	if interactive_run {
 
-	stream, err := c.AttachContainer(context.Background())
-	if err != nil {
-		panic(err)
-	}
-
-	// send id of container
-	stream.Send(&pb.AttachContainerMessage{Payload: &pb.AttachContainerMessage_ContainerId{r.GetId()}})
-	fmt.Println("Connecting to container")
-
-	// put local terminal in raw mode, restore on exit
-	if pty {
-		oldState, _ := term.MakeRaw(int(os.Stdin.Fd()))
-		defer term.Restore(int(os.Stdin.Fd()), oldState)
-	}
-
-	// stdin
-	go func() {
-		buf := make([]byte, 4096)
-		for {
-			n, err := os.Stdin.Read(buf)
-			if err != nil {
-				return
-			}
-			stream.Send(
-				&pb.AttachContainerMessage{
-					Payload: &pb.AttachContainerMessage_StdinData{buf[:n]},
-				},
-			)
-		}
-	}()
-
-	// stdout
-	for {
-		msg, err := stream.Recv()
+		stream, err := c.AttachContainer(context.Background())
 		if err != nil {
-			break
+			panic(err)
 		}
-		if data := msg.GetStdoutData(); data != nil {
-			os.Stdout.Write(data)
+
+		// send id of container
+		stream.Send(&pb.AttachContainerMessage{Payload: &pb.AttachContainerMessage_ContainerId{r.GetId()}})
+		fmt.Println("Connecting to container")
+
+		// put local terminal in raw mode, restore on exit
+		if pty_run {
+			oldState, _ := term.MakeRaw(int(os.Stdin.Fd()))
+			defer term.Restore(int(os.Stdin.Fd()), oldState)
+		}
+
+		// stdin
+		go func() {
+			buf := make([]byte, 4096)
+			for {
+				n, err := os.Stdin.Read(buf)
+				if err != nil {
+					return
+				}
+				stream.Send(
+					&pb.AttachContainerMessage{
+						Payload: &pb.AttachContainerMessage_StdinData{buf[:n]},
+					},
+				)
+			}
+		}()
+
+		// stdout
+		for {
+			msg, err := stream.Recv()
+			if err != nil {
+				break
+			}
+			if data := msg.GetStdoutData(); data != nil {
+				os.Stdout.Write(data)
+			}
 		}
 	}
 }

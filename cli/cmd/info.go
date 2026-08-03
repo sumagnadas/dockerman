@@ -59,7 +59,7 @@ func infoFunc(cmd *cobra.Command, args []string) {
 	fmt.Println("Name:", r.Name)
 	fmt.Println("State:", state)
 	fmt.Println("Image:", r.Image)
-	fmt.Println("Nprocs:", r.Nprocs)
+	fmt.Println("Nprocs:", len(r.Procs))
 	fmt.Println("Procs:", r.Procs)
 	fmt.Println("Rooted:", root_state)
 }

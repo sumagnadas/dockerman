@@ -52,6 +52,6 @@ func psFunc(cmd *cobra.Command, args []string) {
 		case pb.ContainerState_FROZEN:
 			state = "Frozen"
 		}
-		fmt.Printf("%s\t%s\t%s\t%d\t%s\t%s\n", cont.Id, cont.Name, cont.Image, cont.Nprocs, root_state, state)
+		fmt.Printf("%s\t%s\t%s\t%d\t%s\t%s\n", cont.Id, cont.Name, cont.Image, len(cont.Procs), root_state, state)
 	}
 }
