@@ -11,7 +11,9 @@ import (
 	"net"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strconv"
+	"syscall"
 
 	pb "dock/service"
 
@@ -229,8 +231,20 @@ func (s *ContainerServer) Exec(stream pb.ContainerService_ExecServer) (err error
 	target_pid := cont_req.Procs[0]
 	ns_args := []string{"-t", strconv.Itoa(int(target_pid)), "--all"}
 	ns_args = append(ns_args, proc.Cmdline...)
-	nscmd := exec.Command("nsenter", ns_args...)
 
+	// enter container cgroup
+	cgroup_dir := filepath.Join("/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice/dockman", cont_req.Name)
+	cg_fd, err_fd := unix.Open(cgroup_dir, unix.O_DIRECTORY|unix.O_CLOEXEC, 0)
+	if err_fd != nil {
+		return err_fd
+	}
+	defer unix.Close(cg_fd)
+
+	nscmd := exec.Command("nsenter", ns_args...)
+	nscmd.SysProcAttr = &syscall.SysProcAttr{
+		CgroupFD:    cg_fd, // add to container cgroup
+		UseCgroupFD: true,
+	}
 	var stdin io.Writer
 	var stdout, stderr io.Reader
 
