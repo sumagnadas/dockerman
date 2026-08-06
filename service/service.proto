@@ -25,6 +25,12 @@ service ContainerService {
     // already been removed.
     rpc RemoveContainer(ContainerIdNameRequest) returns (EmptyMessage) {}
 
+    // FreezeContainer freezes the container.
+    rpc FreezeContainer(ContainerIdNameRequest) returns (EmptyMessage) {}
+
+    // UnfreezeContainer unfreezes the container.
+    rpc UnfreezeContainer(ContainerIdNameRequest) returns (EmptyMessage) {}
+
     // ListContainers lists all containers by filters.
     rpc ListContainers(EmptyMessage) returns (ListContainersResponse) {}
 

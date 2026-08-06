@@ -19,14 +19,16 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	ContainerService_CreateContainer_FullMethodName = "/dockerman.ContainerService/CreateContainer"
-	ContainerService_AttachContainer_FullMethodName = "/dockerman.ContainerService/AttachContainer"
-	ContainerService_StartContainer_FullMethodName  = "/dockerman.ContainerService/StartContainer"
-	ContainerService_StopContainer_FullMethodName   = "/dockerman.ContainerService/StopContainer"
-	ContainerService_RemoveContainer_FullMethodName = "/dockerman.ContainerService/RemoveContainer"
-	ContainerService_ListContainers_FullMethodName  = "/dockerman.ContainerService/ListContainers"
-	ContainerService_ContainerStatus_FullMethodName = "/dockerman.ContainerService/ContainerStatus"
-	ContainerService_Exec_FullMethodName            = "/dockerman.ContainerService/Exec"
+	ContainerService_CreateContainer_FullMethodName   = "/dockerman.ContainerService/CreateContainer"
+	ContainerService_AttachContainer_FullMethodName   = "/dockerman.ContainerService/AttachContainer"
+	ContainerService_StartContainer_FullMethodName    = "/dockerman.ContainerService/StartContainer"
+	ContainerService_StopContainer_FullMethodName     = "/dockerman.ContainerService/StopContainer"
+	ContainerService_RemoveContainer_FullMethodName   = "/dockerman.ContainerService/RemoveContainer"
+	ContainerService_FreezeContainer_FullMethodName   = "/dockerman.ContainerService/FreezeContainer"
+	ContainerService_UnfreezeContainer_FullMethodName = "/dockerman.ContainerService/UnfreezeContainer"
+	ContainerService_ListContainers_FullMethodName    = "/dockerman.ContainerService/ListContainers"
+	ContainerService_ContainerStatus_FullMethodName   = "/dockerman.ContainerService/ContainerStatus"
+	ContainerService_Exec_FullMethodName              = "/dockerman.ContainerService/Exec"
 )
 
 // ContainerServiceClient is the client API for ContainerService service.
@@ -48,6 +50,10 @@ type ContainerServiceClient interface {
 	// This call is idempotent, and must not return an error if the container has
 	// already been removed.
 	RemoveContainer(ctx context.Context, in *ContainerIdNameRequest, opts ...grpc.CallOption) (*EmptyMessage, error)
+	// FreezeContainer freezes the container.
+	FreezeContainer(ctx context.Context, in *ContainerIdNameRequest, opts ...grpc.CallOption) (*EmptyMessage, error)
+	// UnfreezeContainer unfreezes the container.
+	UnfreezeContainer(ctx context.Context, in *ContainerIdNameRequest, opts ...grpc.CallOption) (*EmptyMessage, error)
 	// ListContainers lists all containers by filters.
 	ListContainers(ctx context.Context, in *EmptyMessage, opts ...grpc.CallOption) (*ListContainersResponse, error)
 	// ContainerStatus returns status of the container. If the container is not
@@ -118,6 +124,26 @@ func (c *containerServiceClient) RemoveContainer(ctx context.Context, in *Contai
 	return out, nil
 }
 
+func (c *containerServiceClient) FreezeContainer(ctx context.Context, in *ContainerIdNameRequest, opts ...grpc.CallOption) (*EmptyMessage, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(EmptyMessage)
+	err := c.cc.Invoke(ctx, ContainerService_FreezeContainer_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *containerServiceClient) UnfreezeContainer(ctx context.Context, in *ContainerIdNameRequest, opts ...grpc.CallOption) (*EmptyMessage, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(EmptyMessage)
+	err := c.cc.Invoke(ctx, ContainerService_UnfreezeContainer_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *containerServiceClient) ListContainers(ctx context.Context, in *EmptyMessage, opts ...grpc.CallOption) (*ListContainersResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ListContainersResponse)
@@ -170,6 +196,10 @@ type ContainerServiceServer interface {
 	// This call is idempotent, and must not return an error if the container has
 	// already been removed.
 	RemoveContainer(context.Context, *ContainerIdNameRequest) (*EmptyMessage, error)
+	// FreezeContainer freezes the container.
+	FreezeContainer(context.Context, *ContainerIdNameRequest) (*EmptyMessage, error)
+	// UnfreezeContainer unfreezes the container.
+	UnfreezeContainer(context.Context, *ContainerIdNameRequest) (*EmptyMessage, error)
 	// ListContainers lists all containers by filters.
 	ListContainers(context.Context, *EmptyMessage) (*ListContainersResponse, error)
 	// ContainerStatus returns status of the container. If the container is not
@@ -201,6 +231,12 @@ func (UnimplementedContainerServiceServer) StopContainer(context.Context, *Conta
 }
 func (UnimplementedContainerServiceServer) RemoveContainer(context.Context, *ContainerIdNameRequest) (*EmptyMessage, error) {
 	return nil, status.Error(codes.Unimplemented, "method RemoveContainer not implemented")
+}
+func (UnimplementedContainerServiceServer) FreezeContainer(context.Context, *ContainerIdNameRequest) (*EmptyMessage, error) {
+	return nil, status.Error(codes.Unimplemented, "method FreezeContainer not implemented")
+}
+func (UnimplementedContainerServiceServer) UnfreezeContainer(context.Context, *ContainerIdNameRequest) (*EmptyMessage, error) {
+	return nil, status.Error(codes.Unimplemented, "method UnfreezeContainer not implemented")
 }
 func (UnimplementedContainerServiceServer) ListContainers(context.Context, *EmptyMessage) (*ListContainersResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListContainers not implemented")
@@ -311,6 +347,42 @@ func _ContainerService_RemoveContainer_Handler(srv interface{}, ctx context.Cont
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ContainerService_FreezeContainer_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ContainerIdNameRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ContainerServiceServer).FreezeContainer(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ContainerService_FreezeContainer_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ContainerServiceServer).FreezeContainer(ctx, req.(*ContainerIdNameRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ContainerService_UnfreezeContainer_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ContainerIdNameRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ContainerServiceServer).UnfreezeContainer(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ContainerService_UnfreezeContainer_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ContainerServiceServer).UnfreezeContainer(ctx, req.(*ContainerIdNameRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _ContainerService_ListContainers_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(EmptyMessage)
 	if err := dec(in); err != nil {
@@ -376,6 +448,14 @@ var ContainerService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "RemoveContainer",
 			Handler:    _ContainerService_RemoveContainer_Handler,
+		},
+		{
+			MethodName: "FreezeContainer",
+			Handler:    _ContainerService_FreezeContainer_Handler,
+		},
+		{
+			MethodName: "UnfreezeContainer",
+			Handler:    _ContainerService_UnfreezeContainer_Handler,
 		},
 		{
 			MethodName: "ListContainers",

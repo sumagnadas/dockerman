@@ -452,6 +452,53 @@ func (s *ContainerServer) StartContainer(ctx context.Context, req *pb.ContainerI
 	return &pb.EmptyMessage{}, nil
 }
 
+func (s *ContainerServer) FreezeContainer(ctx context.Context, req *pb.ContainerIdNameRequest) (*pb.EmptyMessage, error) {
+	var cont_req *utils.ContState
+	for _, cont := range containers {
+		if cont.Id == req.ContainerIdName || cont.Name == req.ContainerIdName {
+			cont_req = cont
+			break
+		}
+	}
+	if cont_req == nil {
+		return &pb.EmptyMessage{}, errors.New("No container with this ID or name.")
+	}
+	if cont_req.State == pb.ContainerState_STOPPED {
+		return &pb.EmptyMessage{}, errors.New("Stopped container cannot be frozen.")
+	}
+
+	// freeze all the processes of the container to stop it.
+	cgroup_freeze_file := filepath.Join("/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice/dockman", cont_req.Name, "cgroup.freeze")
+	os.WriteFile(cgroup_freeze_file, []byte{byte('1')}, 0755)
+
+	cont_req.State = pb.ContainerState_FROZEN
+
+	return &pb.EmptyMessage{}, nil
+}
+func (s *ContainerServer) UnfreezeContainer(ctx context.Context, req *pb.ContainerIdNameRequest) (*pb.EmptyMessage, error) {
+	var cont_req *utils.ContState
+	for _, cont := range containers {
+		if cont.Id == req.ContainerIdName || cont.Name == req.ContainerIdName {
+			cont_req = cont
+			break
+		}
+	}
+	if cont_req == nil {
+		return &pb.EmptyMessage{}, errors.New("No container with this ID or name.")
+	}
+	if cont_req.State == pb.ContainerState_RUNNING || cont_req.State == pb.ContainerState_STOPPED {
+		return &pb.EmptyMessage{}, errors.New("Container is not frozen.")
+	}
+
+	// unfreeze all the processes of the container to stop it.
+	cgroup_freeze_file := filepath.Join("/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice/dockman", cont_req.Name, "cgroup.freeze")
+	os.WriteFile(cgroup_freeze_file, []byte{byte('0')}, 0755)
+
+	cont_req.State = pb.ContainerState_RUNNING
+
+	return &pb.EmptyMessage{}, nil
+}
+
 var daemon_cmd = &cobra.Command{
 	Use:   "daemon",
 	Short: "Launch a daemon to manage containers.",

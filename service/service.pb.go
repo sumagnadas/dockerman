@@ -870,13 +870,15 @@ const file_service_proto_rawDesc = "" +
 	"\aRUNNING\x10\x00\x12\v\n" +
 	"\aSTOPPED\x10\x01\x12\n" +
 	"\n" +
-	"\x06FROZEN\x10\x022\xab\x05\n" +
+	"\x06FROZEN\x10\x022\xcf\x06\n" +
 	"\x10ContainerService\x12Z\n" +
 	"\x0fCreateContainer\x12!.dockerman.CreateContainerRequest\x1a\".dockerman.CreateContainerResponse\"\x00\x12]\n" +
 	"\x0fAttachContainer\x12!.dockerman.AttachContainerMessage\x1a!.dockerman.AttachContainerMessage\"\x00(\x010\x01\x12N\n" +
 	"\x0eStartContainer\x12!.dockerman.ContainerIdNameRequest\x1a\x17.dockerman.EmptyMessage\"\x00\x12M\n" +
 	"\rStopContainer\x12!.dockerman.ContainerIdNameRequest\x1a\x17.dockerman.EmptyMessage\"\x00\x12O\n" +
-	"\x0fRemoveContainer\x12!.dockerman.ContainerIdNameRequest\x1a\x17.dockerman.EmptyMessage\"\x00\x12N\n" +
+	"\x0fRemoveContainer\x12!.dockerman.ContainerIdNameRequest\x1a\x17.dockerman.EmptyMessage\"\x00\x12O\n" +
+	"\x0fFreezeContainer\x12!.dockerman.ContainerIdNameRequest\x1a\x17.dockerman.EmptyMessage\"\x00\x12Q\n" +
+	"\x11UnfreezeContainer\x12!.dockerman.ContainerIdNameRequest\x1a\x17.dockerman.EmptyMessage\"\x00\x12N\n" +
 	"\x0eListContainers\x12\x17.dockerman.EmptyMessage\x1a!.dockerman.ListContainersResponse\"\x00\x12L\n" +
 	"\x0fContainerStatus\x12!.dockerman.ContainerIdNameRequest\x1a\x14.dockerman.Container\"\x00\x12N\n" +
 	"\x04Exec\x12\x1f.dockerman.ExecContainerMessage\x1a\x1f.dockerman.ExecContainerMessage\"\x00(\x010\x01B\x0eZ\fdock/serviceb\x06proto3"
@@ -918,19 +920,23 @@ var file_service_proto_depIdxs = []int32{
 	2,  // 5: dockerman.ContainerService.StartContainer:input_type -> dockerman.ContainerIdNameRequest
 	2,  // 6: dockerman.ContainerService.StopContainer:input_type -> dockerman.ContainerIdNameRequest
 	2,  // 7: dockerman.ContainerService.RemoveContainer:input_type -> dockerman.ContainerIdNameRequest
-	4,  // 8: dockerman.ContainerService.ListContainers:input_type -> dockerman.EmptyMessage
-	2,  // 9: dockerman.ContainerService.ContainerStatus:input_type -> dockerman.ContainerIdNameRequest
-	10, // 10: dockerman.ContainerService.Exec:input_type -> dockerman.ExecContainerMessage
-	5,  // 11: dockerman.ContainerService.CreateContainer:output_type -> dockerman.CreateContainerResponse
-	9,  // 12: dockerman.ContainerService.AttachContainer:output_type -> dockerman.AttachContainerMessage
-	4,  // 13: dockerman.ContainerService.StartContainer:output_type -> dockerman.EmptyMessage
-	4,  // 14: dockerman.ContainerService.StopContainer:output_type -> dockerman.EmptyMessage
-	4,  // 15: dockerman.ContainerService.RemoveContainer:output_type -> dockerman.EmptyMessage
-	7,  // 16: dockerman.ContainerService.ListContainers:output_type -> dockerman.ListContainersResponse
-	6,  // 17: dockerman.ContainerService.ContainerStatus:output_type -> dockerman.Container
-	10, // 18: dockerman.ContainerService.Exec:output_type -> dockerman.ExecContainerMessage
-	11, // [11:19] is the sub-list for method output_type
-	3,  // [3:11] is the sub-list for method input_type
+	2,  // 8: dockerman.ContainerService.FreezeContainer:input_type -> dockerman.ContainerIdNameRequest
+	2,  // 9: dockerman.ContainerService.UnfreezeContainer:input_type -> dockerman.ContainerIdNameRequest
+	4,  // 10: dockerman.ContainerService.ListContainers:input_type -> dockerman.EmptyMessage
+	2,  // 11: dockerman.ContainerService.ContainerStatus:input_type -> dockerman.ContainerIdNameRequest
+	10, // 12: dockerman.ContainerService.Exec:input_type -> dockerman.ExecContainerMessage
+	5,  // 13: dockerman.ContainerService.CreateContainer:output_type -> dockerman.CreateContainerResponse
+	9,  // 14: dockerman.ContainerService.AttachContainer:output_type -> dockerman.AttachContainerMessage
+	4,  // 15: dockerman.ContainerService.StartContainer:output_type -> dockerman.EmptyMessage
+	4,  // 16: dockerman.ContainerService.StopContainer:output_type -> dockerman.EmptyMessage
+	4,  // 17: dockerman.ContainerService.RemoveContainer:output_type -> dockerman.EmptyMessage
+	4,  // 18: dockerman.ContainerService.FreezeContainer:output_type -> dockerman.EmptyMessage
+	4,  // 19: dockerman.ContainerService.UnfreezeContainer:output_type -> dockerman.EmptyMessage
+	7,  // 20: dockerman.ContainerService.ListContainers:output_type -> dockerman.ListContainersResponse
+	6,  // 21: dockerman.ContainerService.ContainerStatus:output_type -> dockerman.Container
+	10, // 22: dockerman.ContainerService.Exec:output_type -> dockerman.ExecContainerMessage
+	13, // [13:23] is the sub-list for method output_type
+	3,  // [3:13] is the sub-list for method input_type
 	3,  // [3:3] is the sub-list for extension type_name
 	3,  // [3:3] is the sub-list for extension extendee
 	0,  // [0:3] is the sub-list for field type_name
