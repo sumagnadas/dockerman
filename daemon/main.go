@@ -84,7 +84,7 @@ func (s *ContainerServer) CreateContainer(ctx context.Context, req *pb.CreateCon
 		init_args = append(init_args, "--user", strconv.Itoa(user))
 		rooted = false
 	}
-	init_args = append(init_args, req.Command)
+	init_args = append(init_args, "--", req.Command)
 	cmd := exec.Command("dockmanc", append(init_args, req.Args...)...)
 	cmd.Env = os.Environ()
 
@@ -391,7 +391,7 @@ func (s *ContainerServer) StartContainer(ctx context.Context, req *pb.ContainerI
 	if !cont_req.Rooted {
 		init_args = append(init_args, "--user", strconv.Itoa(int(cont_req.User)))
 	}
-	init_args = append(init_args, cont_req.Cmd)
+	init_args = append(init_args, "--", cont_req.Cmd)
 	cmd := exec.Command("dockmanc", append(init_args, cont_req.Args...)...)
 
 	var stdin io.Writer

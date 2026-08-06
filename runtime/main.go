@@ -51,6 +51,7 @@ func rootFunc(c *cobra.Command, args []string) error {
 
 	// create the initial arguments slice for the self exec
 	init_args := []string{image, "--name", name}
+	init_args = append(init_args, "--")
 	init_args = append(init_args, cmdline...)
 
 	// check if image exists
