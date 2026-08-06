@@ -87,6 +87,7 @@ message Container {
     repeated string args   = 8;
     ContainerState  state  = 9;
     bool            Pty    = 10;
+    int32           user   = 11;
 }
 
 message ListContainersResponse {

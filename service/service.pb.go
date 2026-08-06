@@ -351,6 +351,7 @@ type Container struct {
 	Args          []string               `protobuf:"bytes,8,rep,name=args,proto3" json:"args,omitempty"`
 	State         ContainerState         `protobuf:"varint,9,opt,name=state,proto3,enum=dockerman.ContainerState" json:"state,omitempty"`
 	Pty           bool                   `protobuf:"varint,10,opt,name=Pty,proto3" json:"Pty,omitempty"`
+	User          int32                  `protobuf:"varint,11,opt,name=user,proto3" json:"user,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -446,6 +447,13 @@ func (x *Container) GetPty() bool {
 		return x.Pty
 	}
 	return false
+}
+
+func (x *Container) GetUser() int32 {
+	if x != nil {
+		return x.User
+	}
+	return 0
 }
 
 type ListContainersResponse struct {
@@ -822,7 +830,7 @@ const file_service_proto_rawDesc = "" +
 	"\x04args\x18\x03 \x03(\tR\x04args\"\x0e\n" +
 	"\fEmptyMessage\")\n" +
 	"\x17CreateContainerResponse\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\"\xdc\x01\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\"\xf0\x01\n" +
 	"\tContainer\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x14\n" +
@@ -833,7 +841,8 @@ const file_service_proto_rawDesc = "" +
 	"\x04args\x18\b \x03(\tR\x04args\x12/\n" +
 	"\x05state\x18\t \x01(\x0e2\x19.dockerman.ContainerStateR\x05state\x12\x10\n" +
 	"\x03Pty\x18\n" +
-	" \x01(\bR\x03Pty\"D\n" +
+	" \x01(\bR\x03Pty\x12\x12\n" +
+	"\x04user\x18\v \x01(\x05R\x04user\"D\n" +
 	"\x16ListContainersResponse\x12*\n" +
 	"\x05conts\x18\x01 \x03(\v2\x14.dockerman.ContainerR\x05conts\" \n" +
 	"\fExecResponse\x12\x10\n" +
