@@ -1,5 +1,5 @@
-# Container runtime from scratch
-This folder contains a basic container runtime management system built from scratch, based on my own studies. As of now, following basic features are implemented:-
+# Container manager from scratch
+This folder contains a basic container management system built from scratch, based on my own studies. As of now, following basic features are implemented:-
 - Isolation of network, process and mountspace view using namespaces
 - Unprivileged and privileged containers with isolated user namespaces
 - Multi container management system based on this runtime
