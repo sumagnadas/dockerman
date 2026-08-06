@@ -14,7 +14,7 @@ import (
 )
 
 var root_cmd = &cobra.Command{
-	Use:   "dockmanc [flags] <command>",
+	Use:   "dockmanc [flags] <image> -- <command>",
 	Short: "Minimal container creation system",
 	RunE:  rootFunc,
 }
@@ -58,6 +58,7 @@ func rootFunc(c *cobra.Command, args []string) error {
 	if _, err_stat := os.Stat(img_path); err_stat != nil {
 		fmt.Println(err_stat)
 		fmt.Println("Image/root filesystem not found or inaccessible at ", img_path)
+		fmt.Println("$DOCKMAN_IMAGE_DIR is used for searching for images (default: ~/.dockman/images)")
 		return errors.New("Image not found")
 
 	}
