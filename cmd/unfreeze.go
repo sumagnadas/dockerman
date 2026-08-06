@@ -5,24 +5,24 @@ import (
 	"fmt"
 	"log"
 
-	pb "dock/service"
+	pb "dockman/service"
 
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
 
-var stop_cmd = &cobra.Command{
-	Use:   "stop <cont_id_or_name>",
-	Short: "Stop a container",
-	Run:   stopFunc,
+var unfreeze_cmd = &cobra.Command{
+	Use:   "unfreeze <cont_id_or_name>",
+	Short: "Unfreeze a container",
+	Run:   unfreezeFunc,
 }
 
 func init() {
-	root_cmd.AddCommand(stop_cmd)
+	root_cmd.AddCommand(unfreeze_cmd)
 }
 
-func stopFunc(cmd *cobra.Command, args []string) {
+func unfreezeFunc(cmd *cobra.Command, args []string) {
 	if len(args) < 1 {
 		fmt.Println("Not enough arguments.")
 		fmt.Println("Usage:", cmd.Use)
@@ -35,7 +35,7 @@ func stopFunc(cmd *cobra.Command, args []string) {
 	defer conn.Close()
 	c := pb.NewContainerServiceClient(conn)
 
-	_, err = c.StopContainer(context.Background(), &pb.ContainerIdNameRequest{ContainerIdName: args[0]})
+	_, err = c.UnfreezeContainer(context.Background(), &pb.ContainerIdNameRequest{ContainerIdName: args[0]})
 	if err != nil {
 		fmt.Println(err)
 	}

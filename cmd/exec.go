@@ -10,7 +10,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	pb "dock/service"
+	pb "dockman/service"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"

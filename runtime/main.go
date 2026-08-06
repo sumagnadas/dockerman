@@ -1,7 +1,7 @@
 package main
 
 import (
-	"dock/utils"
+	"dockman/utils"
 	"errors"
 	"fmt"
 	"os"
@@ -18,6 +18,7 @@ var root_cmd = &cobra.Command{
 	Short: "Minimal container creation system",
 	RunE:  rootFunc,
 }
+var image_dir = os.ExpandEnv("$DOCKMAN_IMAGE_DIR")
 
 var (
 	user int
@@ -43,8 +44,10 @@ func rootFunc(c *cobra.Command, args []string) error {
 	// divide the commandline arguments
 	image := args[0]
 	cmdline := args[1:]
-	wd, _ := os.Getwd()
-	img_path := filepath.Join(wd, image)
+	if image_dir == "" {
+		image_dir = os.ExpandEnv("$HOME/.dockman/images")
+	}
+	img_path := filepath.Join(image_dir, image)
 
 	// create the initial arguments slice for the self exec
 	init_args := []string{image, "--name", name}

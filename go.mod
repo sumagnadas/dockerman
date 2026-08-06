@@ -1,4 +1,4 @@
-module dock
+module dockman
 
 go 1.26.4
 

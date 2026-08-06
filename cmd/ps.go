@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 
-	pb "dock/service"
+	pb "dockman/service"
 
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"

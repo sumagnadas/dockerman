@@ -8,7 +8,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	pb "dock/service"
+	pb "dockman/service"
 
 	"golang.org/x/term"
 	"google.golang.org/grpc"

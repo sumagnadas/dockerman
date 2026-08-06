@@ -1,7 +1,7 @@
 package utils
 
 import (
-	pb "dock/service"
+	pb "dockman/service"
 	"io"
 )
 
