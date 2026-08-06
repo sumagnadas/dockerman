@@ -2,7 +2,7 @@ package cmd
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"log"
 	"os"
 
@@ -17,9 +17,9 @@ import (
 )
 
 var exec_cmd = &cobra.Command{
-	Use:   "exec <container> [flags] -- <command>",
-	Short: "Run a container runtime with image and command (execes the stdin, stdout and stderr of the command to shell)",
-	Run:   execFunc,
+	Use:   "exec [flags] <container> <command>",
+	Short: "Exec into a container with a command",
+	RunE:  execFunc,
 }
 
 var interactive_exec, pty_exec bool
@@ -30,15 +30,14 @@ func init() {
 	exec_cmd.Flags().BoolVarP(&pty_exec, "tty", "t", false, "Allocate a pseudo-TTY")
 }
 
-func execFunc(cmd *cobra.Command, args []string) {
+func execFunc(cmd *cobra.Command, args []string) error {
 	if len(args) < 2 {
-		fmt.Println("Not enough arguments.")
-		fmt.Println("Usage:", cmd.Use)
+		return errors.New("Not enough arguments.")
 	}
 	// Set up a connection to the server.
 	conn, err := grpc.NewClient(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		log.Fatalf("could not connect to daemon: %v", err)
+		log.Fatalf("did not connect to daemon: %v", err)
 	}
 	defer conn.Close()
 	c := pb.NewContainerServiceClient(conn)
@@ -48,17 +47,23 @@ func execFunc(cmd *cobra.Command, args []string) {
 		log.Fatalf("could not exec: %v", err)
 	}
 
+	// send container id and process to make
 	stream.Send(&pb.ExecContainerMessage{Payload: &pb.ExecContainerMessage_Proc{&pb.ExecProcess{ContainerId: args[0], Cmdline: args[1:], Interactive: interactive_exec, Pty: pty_exec}}})
 	if interactive_exec {
 		if pty_exec {
+			// send raw bytes from terminal without catching anything.
 			oldState, _ := term.MakeRaw(int(os.Stdin.Fd()))
 			defer term.Restore(int(os.Stdin.Fd()), oldState)
 		}
+
+		// stdin sync
+		var err_in error
 		go func() {
 			buf := make([]byte, 4096)
 			for {
 				n, err := os.Stdin.Read(buf)
 				if err != nil {
+					err_in = err
 					return
 				}
 				stream.Send(
@@ -69,16 +74,16 @@ func execFunc(cmd *cobra.Command, args []string) {
 			}
 		}()
 
-		// stdout
+		// stdout sync
 		for {
 			msg, err := stream.Recv()
-			if err != nil {
-				break
+			if err != nil || err_in != nil {
+				log.Fatalf("Container stopped or connection with daemon broke.")
 			}
 			if data := msg.GetStdoutData(); data != nil {
 				os.Stdout.Write(data)
 			}
 		}
 	}
-
+	return nil
 }

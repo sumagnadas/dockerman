@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -16,24 +17,23 @@ import (
 )
 
 var attach_cmd = &cobra.Command{
-	Use:   "attach <container> [flags] -- <command>",
-	Short: "Run a container runtime with image and command (attaches the stdin, stdout and stderr of the command to shell)",
-	Run:   attachFunc,
+	Use:   "attach <container> <command>",
+	Short: "Attaches the stdin, stdout and stderr of the command to the container)",
+	RunE:  attachFunc,
 }
 
 func init() {
 	root_cmd.AddCommand(attach_cmd)
 }
 
-func attachFunc(cmd *cobra.Command, args []string) {
+func attachFunc(cmd *cobra.Command, args []string) error {
 	if len(args) < 1 {
-		fmt.Println("Not enough arguments.")
-		fmt.Println("Usage:", cmd.Use)
+		return errors.New("Not enough arguments.")
 	}
 	// Set up a connection to the server.
 	conn, err := grpc.NewClient(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		log.Fatalf("did not connect: %v", err)
+		log.Fatalf("did not connect to daemon: %v", err)
 	}
 	defer conn.Close()
 	c := pb.NewContainerServiceClient(conn)
@@ -46,7 +46,7 @@ func attachFunc(cmd *cobra.Command, args []string) {
 	// attach container after checking id
 	stream, err := c.AttachContainer(context.Background())
 	if err != nil {
-		panic(err)
+		log.Fatalf("did not connect: %v", err)
 	}
 
 	// send id of container
@@ -60,11 +60,13 @@ func attachFunc(cmd *cobra.Command, args []string) {
 	}
 
 	// stdin
+	var err_in error
 	go func() {
 		buf := make([]byte, 4096)
 		for {
 			n, err := os.Stdin.Read(buf)
 			if err != nil {
+				err_in = err
 				return
 			}
 			stream.Send(
@@ -78,8 +80,8 @@ func attachFunc(cmd *cobra.Command, args []string) {
 	// stdout
 	for {
 		msg, err := stream.Recv()
-		if err != nil {
-			break
+		if err != nil || err_in != nil {
+			log.Fatalf("Container stopped or connection with daemon broke.")
 		}
 		if data := msg.GetStdoutData(); data != nil {
 			os.Stdout.Write(data)

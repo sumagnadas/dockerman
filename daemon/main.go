@@ -147,7 +147,7 @@ func (s *ContainerServer) CreateContainer(ctx context.Context, req *pb.CreateCon
 func (s *ContainerServer) AttachContainer(stream pb.ContainerService_AttachContainerServer) (err error) {
 	msg, err_stream := stream.Recv()
 	if err_stream != nil {
-		return err_stream
+		return errors.New("Cannot receive message from CLI app.")
 	}
 	id := msg.GetContainerId()
 	if id == "" {
@@ -165,8 +165,7 @@ func (s *ContainerServer) AttachContainer(stream pb.ContainerService_AttachConta
 			cont_req = cont
 		}
 	}
-	if stdin == nil {
-		fmt.Println("No such container.")
+	if cont_req == nil {
 		return errors.New("No such container.")
 	}
 
@@ -190,11 +189,11 @@ func (s *ContainerServer) AttachContainer(stream pb.ContainerService_AttachConta
 	buf := make([]byte, 4096)
 	for {
 		if cont_req.State == pb.ContainerState_STOPPED {
-			return errors.New("Container is stopped. Please start the container to exec into it.")
+			return errors.New("Container is stopped. Please start the container to attach into it.")
 		}
 		n, err_read := output.Read(buf)
 		if err_read != nil {
-			return err_read
+			return errors.New("Container exitted or stopped.")
 		}
 		stream.Send(&pb.AttachContainerMessage{Payload: &pb.AttachContainerMessage_StdoutData{buf[:n]}})
 	}
@@ -228,7 +227,8 @@ func (s *ContainerServer) ListContainers(ctx context.Context, req *pb.EmptyMessa
 func (s *ContainerServer) Exec(stream pb.ContainerService_ExecServer) (err error) {
 	msg, err_stream := stream.Recv()
 	if err_stream != nil {
-		return err_stream
+		return errors.New("Cannot receive message from CLI app.")
+
 	}
 	proc := msg.GetProc()
 	if proc == nil {
@@ -257,7 +257,7 @@ func (s *ContainerServer) Exec(stream pb.ContainerService_ExecServer) (err error
 	cgroup_dir := filepath.Join("/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice/dockman", cont_req.Name)
 	cg_fd, err_fd := unix.Open(cgroup_dir, unix.O_DIRECTORY|unix.O_CLOEXEC, 0)
 	if err_fd != nil {
-		return err_fd
+		return errors.New("Cannot open container cgroup dir.")
 	}
 	defer unix.Close(cg_fd)
 
@@ -272,7 +272,7 @@ func (s *ContainerServer) Exec(stream pb.ContainerService_ExecServer) (err error
 	if proc.GetPty() {
 		f, err := pty.Start(nscmd)
 		if err != nil {
-			return err
+			return errors.New("Couldn't start command or connect PT.Y")
 		}
 		stdin = f
 		stdout = f
@@ -284,7 +284,7 @@ func (s *ContainerServer) Exec(stream pb.ContainerService_ExecServer) (err error
 
 		err_run := nscmd.Start()
 		if err_run != nil {
-			panic(err_run)
+			return errors.New("Couldn't start command")
 		}
 		if err_stdin != nil || err_stdout != nil || err_stderr != nil {
 			nscmd.Process.Signal(unix.SIGTERM)
@@ -322,7 +322,7 @@ func (s *ContainerServer) Exec(stream pb.ContainerService_ExecServer) (err error
 		for {
 			n, err_read := output.Read(buf)
 			if err_read != nil {
-				return err_read
+				return errors.New("Cannot read process output,")
 			}
 			stream.Send(&pb.ExecContainerMessage{Payload: &pb.ExecContainerMessage_StdoutData{buf[:n]}})
 		}
@@ -404,7 +404,6 @@ func (s *ContainerServer) StartContainer(ctx context.Context, req *pb.ContainerI
 			fmt.Println(err)
 			return &pb.EmptyMessage{}, err
 		}
-		fmt.Println(f.Name())
 		stdin = f
 		stdout = f
 		stderr = f

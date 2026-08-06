@@ -2,7 +2,7 @@ package cmd
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"log"
 
 	pb "dockman/service"
@@ -15,28 +15,28 @@ import (
 var freeze_cmd = &cobra.Command{
 	Use:   "freeze <cont_id_or_name>",
 	Short: "Freeze a container",
-	Run:   freezeFunc,
+	RunE:  freezeFunc,
 }
 
 func init() {
 	root_cmd.AddCommand(freeze_cmd)
 }
 
-func freezeFunc(cmd *cobra.Command, args []string) {
+func freezeFunc(cmd *cobra.Command, args []string) error {
 	if len(args) < 1 {
-		fmt.Println("Not enough arguments.")
-		fmt.Println("Usage:", cmd.Use)
+		return errors.New("Not enough arguments.")
 	}
 	// Set up a connection to the server.
 	conn, err := grpc.NewClient(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		log.Fatalf("did not connect: %v", err)
+		log.Fatalf("did not connect to daemon: %v", err)
 	}
 	defer conn.Close()
 	c := pb.NewContainerServiceClient(conn)
 
 	_, err = c.FreezeContainer(context.Background(), &pb.ContainerIdNameRequest{ContainerIdName: args[0]})
 	if err != nil {
-		fmt.Println(err)
+		log.Fatalf("Couldn't freeze container properly: %v", err)
 	}
+	return nil
 }

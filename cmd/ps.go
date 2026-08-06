@@ -14,7 +14,7 @@ import (
 
 var ps_cmd = &cobra.Command{
 	Use:   "ps",
-	Short: "Get a list of running containers",
+	Short: "Get a list of all containers",
 	Run:   psFunc,
 }
 
@@ -23,11 +23,10 @@ func init() {
 }
 
 func psFunc(cmd *cobra.Command, args []string) {
-
 	// Set up a connection to the server.
 	conn, err := grpc.NewClient(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		log.Fatalf("did not connect: %v", err)
+		log.Fatalf("did not connect to daemon: %v", err)
 	}
 	defer conn.Close()
 	c := pb.NewContainerServiceClient(conn)

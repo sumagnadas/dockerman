@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -16,9 +17,9 @@ import (
 )
 
 var run_cmd = &cobra.Command{
-	Use:   "run <image> [flags] -- <command>",
-	Short: "Run a container runtime with image and command (attaches the stdin, stdout and stderr of the command to shell)",
-	Run:   runFunc,
+	Use:   "run [flags] <image> <command>",
+	Short: "Create a container runtime with specified image and command",
+	RunE:  runFunc,
 }
 
 var user, pty_run, interactive_run bool
@@ -32,16 +33,14 @@ func init() {
 	run_cmd.Flags().StringVar(&name, "name", "", "Name of the container")
 }
 
-func runFunc(cmd *cobra.Command, args []string) {
+func runFunc(cmd *cobra.Command, args []string) error {
 	if len(args) < 2 {
-		fmt.Println("Not enough arguments.")
-		fmt.Println(cmd.Use)
-		return
+		return errors.New("Not enough arguments")
 	}
 	// Set up a connection to the server.
 	conn, err := grpc.NewClient(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		log.Fatalf("did not connect: %v", err)
+		log.Fatalf("did not connect to daemon: %v", err)
 	}
 	defer conn.Close()
 	c := pb.NewContainerServiceClient(conn)
@@ -58,12 +57,12 @@ func runFunc(cmd *cobra.Command, args []string) {
 	if err != nil {
 		log.Fatalf("could not create container: %v", err)
 	}
-	log.Printf("Id: %s", r.GetId())
+
 	if interactive_run {
 
 		stream, err := c.AttachContainer(context.Background())
 		if err != nil {
-			panic(err)
+			log.Fatalf("could not attach to container: %v", err)
 		}
 
 		// send id of container
@@ -77,11 +76,13 @@ func runFunc(cmd *cobra.Command, args []string) {
 		}
 
 		// stdin
+		var err_in error
 		go func() {
 			buf := make([]byte, 4096)
 			for {
 				n, err := os.Stdin.Read(buf)
 				if err != nil {
+					err_in = err
 					return
 				}
 				stream.Send(
@@ -95,12 +96,13 @@ func runFunc(cmd *cobra.Command, args []string) {
 		// stdout
 		for {
 			msg, err := stream.Recv()
-			if err != nil {
-				break
+			if err != nil || err_in != nil {
+				log.Fatalf("Container stopped or connection with daemon broke.")
 			}
 			if data := msg.GetStdoutData(); data != nil {
 				os.Stdout.Write(data)
 			}
 		}
 	}
+	return nil
 }

@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 
@@ -15,22 +16,21 @@ import (
 var info_cmd = &cobra.Command{
 	Use:   "info <cont_id_or_name>",
 	Short: "Get info of a created container",
-	Run:   infoFunc,
+	RunE:  infoFunc,
 }
 
 func init() {
 	root_cmd.AddCommand(info_cmd)
 }
 
-func infoFunc(cmd *cobra.Command, args []string) {
+func infoFunc(cmd *cobra.Command, args []string) error {
 	if len(args) < 1 {
-		fmt.Println("Not enough arguments.")
-		fmt.Println("Usage:", cmd.Use)
+		return errors.New("Not enough arguments")
 	}
 	// Set up a connection to the server.
 	conn, err := grpc.NewClient(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		log.Fatalf("did not connect: %v", err)
+		log.Fatalf("did not connect to daemon: %v", err)
 	}
 	defer conn.Close()
 	c := pb.NewContainerServiceClient(conn)
@@ -62,4 +62,5 @@ func infoFunc(cmd *cobra.Command, args []string) {
 	fmt.Println("Nprocs:", len(r.Procs))
 	fmt.Println("Procs:", r.Procs)
 	fmt.Println("Rooted:", root_state)
+	return nil
 }
