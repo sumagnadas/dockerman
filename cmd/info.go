@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 
 	pb "dockman/service"
 
@@ -30,14 +29,16 @@ func infoFunc(cmd *cobra.Command, args []string) error {
 	// Set up a connection to the server.
 	conn, err := grpc.NewClient(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		log.Fatalf("did not connect to daemon: %v", err)
+		fmt.Println("did not connect to daemon:", err)
+		return nil
 	}
 	defer conn.Close()
 	c := pb.NewContainerServiceClient(conn)
 
 	r, err := c.ContainerStatus(context.Background(), &pb.ContainerIdNameRequest{ContainerIdName: args[0]})
 	if err != nil {
-		log.Fatalf("could not get container info: %v", err)
+		fmt.Println("could not get container info:", err)
+		return nil
 	}
 
 	root_state := "Rootless"

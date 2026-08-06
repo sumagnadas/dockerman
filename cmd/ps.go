@@ -3,7 +3,6 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"log"
 
 	pb "dockman/service"
 
@@ -26,14 +25,16 @@ func psFunc(cmd *cobra.Command, args []string) {
 	// Set up a connection to the server.
 	conn, err := grpc.NewClient(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		log.Fatalf("did not connect to daemon: %v", err)
+		fmt.Println("did not connect to daemon:", err)
+		return
 	}
 	defer conn.Close()
 	c := pb.NewContainerServiceClient(conn)
 
 	r, err := c.ListContainers(context.Background(), &pb.EmptyMessage{})
 	if err != nil {
-		log.Fatalf("could not list container: %v", err)
+		fmt.Println("could not list container:", err)
+		return
 	}
 	fmt.Println("ID\t\tName\t\tImage\tNprocs\tRooted\t\tState")
 	for _, cont := range r.GetConts() {

@@ -3,7 +3,7 @@ package cmd
 import (
 	"context"
 	"errors"
-	"log"
+	"fmt"
 
 	pb "dockman/service"
 
@@ -29,14 +29,16 @@ func stopFunc(cmd *cobra.Command, args []string) error {
 	// Set up a connection to the server.
 	conn, err := grpc.NewClient(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		log.Fatalf("did not connect to daemon: %v", err)
+		fmt.Println("did not connect to daemon: ", err)
+		return nil
 	}
 	defer conn.Close()
 	c := pb.NewContainerServiceClient(conn)
 
 	_, err = c.StopContainer(context.Background(), &pb.ContainerIdNameRequest{ContainerIdName: args[0]})
 	if err != nil {
-		log.Fatalf("could not stop container: %v", err)
+		fmt.Println("could not stop container: ", err)
+		return nil
 	}
 	return nil
 }

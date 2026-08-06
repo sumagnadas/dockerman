@@ -3,7 +3,7 @@ package cmd
 import (
 	"context"
 	"errors"
-	"log"
+	"fmt"
 	"os"
 
 	"golang.org/x/term"
@@ -37,14 +37,16 @@ func execFunc(cmd *cobra.Command, args []string) error {
 	// Set up a connection to the server.
 	conn, err := grpc.NewClient(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		log.Fatalf("did not connect to daemon: %v", err)
+		fmt.Println("did not connect to daemon:", err)
+		return nil
 	}
 	defer conn.Close()
 	c := pb.NewContainerServiceClient(conn)
 
 	stream, err_exec := c.Exec(context.Background())
 	if err_exec != nil {
-		log.Fatalf("could not exec: %v", err)
+		fmt.Println("could not exec:", err)
+		return nil
 	}
 
 	// send container id and process to make
@@ -78,7 +80,8 @@ func execFunc(cmd *cobra.Command, args []string) error {
 		for {
 			msg, err := stream.Recv()
 			if err != nil || err_in != nil {
-				log.Fatalf("Container stopped or connection with daemon broke.")
+				fmt.Println("Container stopped or connection with daemon broke.")
+				return nil
 			}
 			if data := msg.GetStdoutData(); data != nil {
 				os.Stdout.Write(data)

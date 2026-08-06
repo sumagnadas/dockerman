@@ -3,7 +3,7 @@ package cmd
 import (
 	"context"
 	"errors"
-	"log"
+	"fmt"
 
 	pb "dockman/service"
 
@@ -29,14 +29,16 @@ func freezeFunc(cmd *cobra.Command, args []string) error {
 	// Set up a connection to the server.
 	conn, err := grpc.NewClient(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		log.Fatalf("did not connect to daemon: %v", err)
+		fmt.Printf("did not connect to daemon: %v", err)
+		return nil
 	}
 	defer conn.Close()
 	c := pb.NewContainerServiceClient(conn)
 
 	_, err = c.FreezeContainer(context.Background(), &pb.ContainerIdNameRequest{ContainerIdName: args[0]})
 	if err != nil {
-		log.Fatalf("Couldn't freeze container properly: %v", err)
+		fmt.Printf("Couldn't freeze container properly: %v", err)
+		return nil
 	}
 	return nil
 }

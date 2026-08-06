@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -33,20 +32,23 @@ func attachFunc(cmd *cobra.Command, args []string) error {
 	// Set up a connection to the server.
 	conn, err := grpc.NewClient(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		log.Fatalf("did not connect to daemon: %v", err)
+		fmt.Println("did not connect to daemon:", err)
+		return nil
 	}
 	defer conn.Close()
 	c := pb.NewContainerServiceClient(conn)
 
 	r, err := c.ContainerStatus(context.Background(), &pb.ContainerIdNameRequest{ContainerIdName: args[0]})
 	if err != nil {
-		log.Fatalf("could not get container info: %v", err)
+		fmt.Println("could not get container info:", err)
+		return nil
 	}
 
 	// attach container after checking id
 	stream, err := c.AttachContainer(context.Background())
 	if err != nil {
-		log.Fatalf("did not connect: %v", err)
+		fmt.Println("did not attach properly:", err)
+		return nil
 	}
 
 	// send id of container
@@ -81,7 +83,8 @@ func attachFunc(cmd *cobra.Command, args []string) error {
 	for {
 		msg, err := stream.Recv()
 		if err != nil || err_in != nil {
-			log.Fatalf("Container stopped or connection with daemon broke.")
+			fmt.Println("Container stopped or connection with daemon broke.")
+			return nil
 		}
 		if data := msg.GetStdoutData(); data != nil {
 			os.Stdout.Write(data)

@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -40,7 +39,8 @@ func runFunc(cmd *cobra.Command, args []string) error {
 	// Set up a connection to the server.
 	conn, err := grpc.NewClient(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		log.Fatalf("did not connect to daemon: %v", err)
+		fmt.Println("did not connect to daemon:", err)
+		return nil
 	}
 	defer conn.Close()
 	c := pb.NewContainerServiceClient(conn)
@@ -55,14 +55,16 @@ func runFunc(cmd *cobra.Command, args []string) error {
 	// Create container
 	r, err := c.CreateContainer(context.Background(), &cont_request)
 	if err != nil {
-		log.Fatalf("could not create container: %v", err)
+		fmt.Println("could not create container:", err)
+		return nil
 	}
 
 	if interactive_run {
 
 		stream, err := c.AttachContainer(context.Background())
 		if err != nil {
-			log.Fatalf("could not attach to container: %v", err)
+			fmt.Println("could not attach to container:", err)
+			return nil
 		}
 
 		// send id of container
@@ -97,7 +99,8 @@ func runFunc(cmd *cobra.Command, args []string) error {
 		for {
 			msg, err := stream.Recv()
 			if err != nil || err_in != nil {
-				log.Fatalf("Container stopped or connection with daemon broke.")
+				fmt.Println("Container stopped or connection with daemon broke.")
+				return nil
 			}
 			if data := msg.GetStdoutData(); data != nil {
 				os.Stdout.Write(data)
